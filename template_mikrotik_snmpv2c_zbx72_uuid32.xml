@@ -1,0 +1,35 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<zabbix_export version="7.0">
+  <templates>
+    <template>
+      <uuid>3f2e39ca3b2c4dca808a16794d9037cd</uuid>
+      <template>Template_Mikrotik_SNMPv2c_64bit</template>
+      <name>Template Mikrotik SNMPv2c (64-bit)</name>
+      <description>Final fix: UUID with 32 chars, group = Templates, Zabbix 7.2 ready</description>
+      <groups>
+        <group>
+          <name>Templates</name>
+        </group>
+      </groups>
+      <items>
+        <item>
+          <uuid>aa15b02ee12d4ae08e0b80097e5f691a</uuid>
+          <name>Interface In Octets 64bit</name>
+          <type>SNMP_AGENT</type>
+          <snmp_oid>IF-MIB::ifHCInOctets.1</snmp_oid>
+          <key>net.if.in[ifHCInOctets.1]</key>
+          <delay>30s</delay>
+          <history>7d</history>
+          <trends>90d</trends>
+          <status>ENABLED</status>
+          <value_type>UNSIGNED</value_type>
+          <units>bps</units>
+          <description>64-bit input counter for interface 1</description>
+        </item>
+      </items>
+      <discovery_rules/>
+      <httptests/>
+      <macros/>
+    </template>
+  </templates>
+</zabbix_export>
