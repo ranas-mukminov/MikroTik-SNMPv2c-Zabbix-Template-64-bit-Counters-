@@ -5,7 +5,7 @@
       <uuid>3f2e39ca3b2c4dca808a16794d9037cd</uuid>
       <template>Template_Mikrotik_SNMPv2c_64bit</template>
       <name>Template Mikrotik SNMPv2c (64-bit)</name>
-      <description>Final fix: UUID with 32 chars, group = Templates, Zabbix 7.2 ready</description>
+      <description>Enhanced SNMPv2c template for MikroTik routers with interface discovery, preprocessing and status monitoring tuned for Zabbix 7.0+.</description>
       <groups>
         <group>
           <name>Templates</name>
@@ -13,23 +13,223 @@
       </groups>
       <items>
         <item>
-          <uuid>aa15b02ee12d4ae08e0b80097e5f691a</uuid>
-          <name>Interface In Octets 64bit</name>
+          <uuid>2f66c20b1f864f9d8c20c0fd70bbdd26</uuid>
+          <name>SNMP agent availability</name>
           <type>SNMP_AGENT</type>
-          <snmp_oid>IF-MIB::ifHCInOctets.1</snmp_oid>
-          <key>net.if.in[ifHCInOctets.1]</key>
-          <delay>30s</delay>
+          <snmp_oid>SNMPv2-MIB::sysUpTime.0</snmp_oid>
+          <key>system.uptime[sysUpTime]</key>
+          <delay>1m</delay>
           <history>7d</history>
           <trends>90d</trends>
           <status>ENABLED</status>
-          <value_type>UNSIGNED</value_type>
-          <units>bps</units>
-          <description>64-bit input counter for interface 1</description>
+          <value_type>FLOAT</value_type>
+          <units>s</units>
+          <preprocessing>
+            <step>
+              <type>MULTIPLIER</type>
+              <params>0.01</params>
+            </step>
+          </preprocessing>
+          <tags>
+            <tag>
+              <tag>Application</tag>
+              <value>System</value>
+            </tag>
+          </tags>
+          <description>Device uptime in seconds (converted from SNMP timeticks).</description>
+        </item>
+        <item>
+          <uuid>1660c6b9c63e4f77b13fb19f8d0db67a</uuid>
+          <name>System description</name>
+          <type>SNMP_AGENT</type>
+          <snmp_oid>SNMPv2-MIB::sysDescr.0</snmp_oid>
+          <key>system.descr[sysDescr]</key>
+          <delay>1h</delay>
+          <history>7d</history>
+          <trends>0</trends>
+          <status>ENABLED</status>
+          <value_type>TEXT</value_type>
+          <tags>
+            <tag>
+              <tag>Application</tag>
+              <value>System</value>
+            </tag>
+          </tags>
+          <description>Full system description to verify the SNMP agent identity.</description>
         </item>
       </items>
-      <discovery_rules/>
+      <discovery_rules>
+        <discovery_rule>
+          <uuid>da4f31a5c93d4b26a07e38bc779ce611</uuid>
+          <name>Network interface discovery</name>
+          <type>SNMP_AGENT</type>
+          <snmp_oid>discovery[{#IFINDEX},IF-MIB::ifIndex,{#IFDESCR},IF-MIB::ifDescr,{#IFNAME},IF-MIB::ifName]</snmp_oid>
+          <key>net.if.discovery</key>
+          <delay>1h</delay>
+          <status>ENABLED</status>
+          <allowed_hosts/>
+          <lifetime>7d</lifetime>
+          <description>Discovers physical and logical interfaces, excluding loopback and virtual interfaces by default.</description>
+          <filter>
+            <conditions>
+              <condition>
+                <macro>{#IFDESCR}</macro>
+                <operator>NOT_MATCHES_REGEX</operator>
+                <value>(?i:loopback|virtual|vlan|gre|pppoe)</value>
+                <formulaid>A</formulaid>
+              </condition>
+            </conditions>
+          </filter>
+          <item_prototypes>
+            <item_prototype>
+              <uuid>5dd95fafbb7f43d89e48538a369627b4</uuid>
+              <name>{#IFDESCR}: Inbound bandwidth</name>
+              <type>SNMP_AGENT</type>
+              <snmp_oid>IF-MIB::ifHCInOctets.{#IFINDEX}</snmp_oid>
+              <key>net.if.in[{#IFINDEX}]</key>
+              <delay>30s</delay>
+              <history>7d</history>
+              <trends>90d</trends>
+              <status>ENABLED</status>
+              <value_type>FLOAT</value_type>
+              <units>bps</units>
+              <preprocessing>
+                <step>
+                  <type>CHANGE_PER_SECOND</type>
+                  <params/>
+                </step>
+                <step>
+                  <type>MULTIPLIER</type>
+                  <params>8</params>
+                </step>
+              </preprocessing>
+              <tags>
+                <tag>
+                  <tag>Application</tag>
+                  <value>Interfaces</value>
+                </tag>
+              </tags>
+              <description>64-bit inbound traffic converted to bits per second.</description>
+            </item_prototype>
+            <item_prototype>
+              <uuid>7b14829fa6de4b71ab488a297e0e86d8</uuid>
+              <name>{#IFDESCR}: Outbound bandwidth</name>
+              <type>SNMP_AGENT</type>
+              <snmp_oid>IF-MIB::ifHCOutOctets.{#IFINDEX}</snmp_oid>
+              <key>net.if.out[{#IFINDEX}]</key>
+              <delay>30s</delay>
+              <history>7d</history>
+              <trends>90d</trends>
+              <status>ENABLED</status>
+              <value_type>FLOAT</value_type>
+              <units>bps</units>
+              <preprocessing>
+                <step>
+                  <type>CHANGE_PER_SECOND</type>
+                  <params/>
+                </step>
+                <step>
+                  <type>MULTIPLIER</type>
+                  <params>8</params>
+                </step>
+              </preprocessing>
+              <tags>
+                <tag>
+                  <tag>Application</tag>
+                  <value>Interfaces</value>
+                </tag>
+              </tags>
+              <description>64-bit outbound traffic converted to bits per second.</description>
+            </item_prototype>
+            <item_prototype>
+              <uuid>5e3bb8b7eae44c7f8ff1fef8b6b7cfc0</uuid>
+              <name>{#IFDESCR}: Operational status</name>
+              <type>SNMP_AGENT</type>
+              <snmp_oid>IF-MIB::ifOperStatus.{#IFINDEX}</snmp_oid>
+              <key>net.if.status[{#IFINDEX}]</key>
+              <delay>30s</delay>
+              <history>30d</history>
+              <trends>0</trends>
+              <status>ENABLED</status>
+              <value_type>UNSIGNED</value_type>
+              <tags>
+                <tag>
+                  <tag>Application</tag>
+                  <value>Interfaces</value>
+                </tag>
+              </tags>
+              <description>Interface operational status (1=up, 2=down, 3=testing, 4=unknown, 5=dormant, 6=notPresent, 7=lowerLayerDown).</description>
+            </item_prototype>
+            <item_prototype>
+              <uuid>9980217a1e8a4eb3844912275be917ce</uuid>
+              <name>{#IFDESCR}: Inbound errors</name>
+              <type>SNMP_AGENT</type>
+              <snmp_oid>IF-MIB::ifInErrors.{#IFINDEX}</snmp_oid>
+              <key>net.if.in.errors[{#IFINDEX}]</key>
+              <delay>1m</delay>
+              <history>7d</history>
+              <trends>90d</trends>
+              <status>ENABLED</status>
+              <value_type>FLOAT</value_type>
+              <preprocessing>
+                <step>
+                  <type>CHANGE_PER_SECOND</type>
+                  <params/>
+                </step>
+              </preprocessing>
+              <tags>
+                <tag>
+                  <tag>Application</tag>
+                  <value>Interfaces</value>
+                </tag>
+              </tags>
+              <description>Inbound error rate calculated per second.</description>
+            </item_prototype>
+            <item_prototype>
+              <uuid>a2b82661dd0d4f098c113e5a7b7c2b3c</uuid>
+              <name>{#IFDESCR}: Outbound errors</name>
+              <type>SNMP_AGENT</type>
+              <snmp_oid>IF-MIB::ifOutErrors.{#IFINDEX}</snmp_oid>
+              <key>net.if.out.errors[{#IFINDEX}]</key>
+              <delay>1m</delay>
+              <history>7d</history>
+              <trends>90d</trends>
+              <status>ENABLED</status>
+              <value_type>FLOAT</value_type>
+              <preprocessing>
+                <step>
+                  <type>CHANGE_PER_SECOND</type>
+                  <params/>
+                </step>
+              </preprocessing>
+              <tags>
+                <tag>
+                  <tag>Application</tag>
+                  <value>Interfaces</value>
+                </tag>
+              </tags>
+              <description>Outbound error rate calculated per second.</description>
+            </item_prototype>
+          </item_prototypes>
+          <trigger_prototypes>
+            <trigger_prototype>
+              <uuid>9f05a950d24147b5845f9b5f0072ac6d</uuid>
+              <expression>{Template_Mikrotik_SNMPv2c_64bit:net.if.status[{#IFINDEX}].last()}=2</expression>
+              <name>{#IFDESCR}: Interface is down</name>
+              <priority>AVERAGE</priority>
+              <description>Alerts when an interface reports an operational status of down.</description>
+            </trigger_prototype>
+          </trigger_prototypes>
+        </discovery_rule>
+      </discovery_rules>
       <httptests/>
-      <macros/>
+      <macros>
+        <macro>
+          <macro>{$SNMP_COMMUNITY}</macro>
+          <value>public</value>
+          <description>Default SNMP community string for SNMPv2c (override on hosts).</description>
+        </macro>
+      </macros>
     </template>
   </templates>
 </zabbix_export>
