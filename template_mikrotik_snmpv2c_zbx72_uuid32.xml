@@ -63,20 +63,33 @@
           <uuid>da4f31a5c93d4b26a07e38bc779ce611</uuid>
           <name>Network interface discovery</name>
           <type>SNMP_AGENT</type>
-          <snmp_oid>discovery[{#IFINDEX},IF-MIB::ifIndex,{#IFDESCR},IF-MIB::ifDescr,{#IFNAME},IF-MIB::ifName]</snmp_oid>
+          <snmp_oid>discovery[{#IFINDEX},IF-MIB::ifIndex,{#IFDESCR},IF-MIB::ifDescr,{#IFNAME},IF-MIB::ifName,{#IFTYPE},IF-MIB::ifType,{#IFALIAS},IF-MIB::ifAlias,{#IFADMINSTATUS},IF-MIB::ifAdminStatus]</snmp_oid>
           <key>net.if.discovery</key>
           <delay>1h</delay>
           <status>ENABLED</status>
           <allowed_hosts/>
           <lifetime>7d</lifetime>
-          <description>Discovers physical and logical interfaces, excluding loopback and virtual interfaces by default.</description>
+          <description>Discovers production interfaces, exposing name, alias, type and administrative state for refined filtering.</description>
           <filter>
+            <formula>A&amp;B&amp;C</formula>
             <conditions>
               <condition>
                 <macro>{#IFDESCR}</macro>
-                <operator>NOT_MATCHES_REGEX</operator>
-                <value>(?i:loopback|virtual|vlan|gre|pppoe)</value>
+                <operator>MATCHES_REGEX</operator>
+                <value>{$IF.LLD.FILTER.MATCH}</value>
                 <formulaid>A</formulaid>
+              </condition>
+              <condition>
+                <macro>{#IFDESCR}</macro>
+                <operator>NOT_MATCHES_REGEX</operator>
+                <value>{$IF.LLD.FILTER.NOT_MATCHES}</value>
+                <formulaid>B</formulaid>
+              </condition>
+              <condition>
+                <macro>{#IFADMINSTATUS}</macro>
+                <operator>MATCHES_REGEX</operator>
+                <value>{$IF.LLD.FILTER.ADMIN_STATUS}</value>
+                <formulaid>C</formulaid>
               </condition>
             </conditions>
           </filter>
@@ -210,6 +223,51 @@
               </tags>
               <description>Outbound error rate calculated per second.</description>
             </item_prototype>
+            <item_prototype>
+              <uuid>4e8f1c0f2d6248fb9c5a64b9a040a0ef</uuid>
+              <name>{#IFDESCR}: Alias</name>
+              <type>SNMP_AGENT</type>
+              <snmp_oid>IF-MIB::ifAlias.{#IFINDEX}</snmp_oid>
+              <key>net.if.alias[{#IFINDEX}]</key>
+              <delay>1h</delay>
+              <history>30d</history>
+              <trends>0</trends>
+              <status>ENABLED</status>
+              <value_type>TEXT</value_type>
+              <tags>
+                <tag>
+                  <tag>Application</tag>
+                  <value>Interfaces</value>
+                </tag>
+              </tags>
+              <description>Interface alias/description as configured on the MikroTik device.</description>
+            </item_prototype>
+            <item_prototype>
+              <uuid>c7f53df78e84410a8ab8cf4aa6aa0280</uuid>
+              <name>{#IFDESCR}: Configured speed</name>
+              <type>SNMP_AGENT</type>
+              <snmp_oid>IF-MIB::ifHighSpeed.{#IFINDEX}</snmp_oid>
+              <key>net.if.highspeed[{#IFINDEX}]</key>
+              <delay>5m</delay>
+              <history>30d</history>
+              <trends>90d</trends>
+              <status>ENABLED</status>
+              <value_type>FLOAT</value_type>
+              <units>bps</units>
+              <preprocessing>
+                <step>
+                  <type>MULTIPLIER</type>
+                  <params>1000000</params>
+                </step>
+              </preprocessing>
+              <tags>
+                <tag>
+                  <tag>Application</tag>
+                  <value>Interfaces</value>
+                </tag>
+              </tags>
+              <description>Configured interface bandwidth (converted from Mbps to bps) useful for capacity dashboards.</description>
+            </item_prototype>
           </item_prototypes>
           <trigger_prototypes>
             <trigger_prototype>
@@ -218,6 +276,25 @@
               <name>{#IFDESCR}: Interface is down</name>
               <priority>AVERAGE</priority>
               <description>Alerts when an interface reports an operational status of down.</description>
+              <tags>
+                <tag>
+                  <tag>Component</tag>
+                  <value>Network</value>
+                </tag>
+              </tags>
+            </trigger_prototype>
+            <trigger_prototype>
+              <uuid>6a7849d42c8b43df8a075fe9f82bc5a3</uuid>
+              <expression>({Template_Mikrotik_SNMPv2c_64bit:net.if.in.errors[{#IFINDEX}].max(5m)}&gt;{$IF.ERRORS.MAX_DELTA}) or ({Template_Mikrotik_SNMPv2c_64bit:net.if.out.errors[{#IFINDEX}].max(5m)}&gt;{$IF.ERRORS.MAX_DELTA})</expression>
+              <name>{#IFDESCR}: High error rate</name>
+              <priority>WARNING</priority>
+              <description>Warns when inbound or outbound error rates exceed the allowed per-second threshold.</description>
+              <tags>
+                <tag>
+                  <tag>Component</tag>
+                  <value>Network</value>
+                </tag>
+              </tags>
             </trigger_prototype>
           </trigger_prototypes>
         </discovery_rule>
@@ -228,6 +305,26 @@
           <macro>{$SNMP_COMMUNITY}</macro>
           <value>public</value>
           <description>Default SNMP community string for SNMPv2c (override on hosts).</description>
+        </macro>
+        <macro>
+          <macro>{$IF.LLD.FILTER.MATCH}</macro>
+          <value>.*</value>
+          <description>Regex of interfaces to keep during discovery (matches everything by default).</description>
+        </macro>
+        <macro>
+          <macro>{$IF.LLD.FILTER.NOT_MATCHES}</macro>
+          <value>(?i:loopback|virtual|vlan|gre|pppoe)</value>
+          <description>Regex of interfaces to drop from discovery (loopbacks, virtual and tunnel links by default).</description>
+        </macro>
+        <macro>
+          <macro>{$IF.LLD.FILTER.ADMIN_STATUS}</macro>
+          <value>^1$</value>
+          <description>Administrative states permitted for discovery (1 = up by default).</description>
+        </macro>
+        <macro>
+          <macro>{$IF.ERRORS.MAX_DELTA}</macro>
+          <value>1</value>
+          <description>Maximum tolerated per-second error delta before raising the high error rate trigger.</description>
         </macro>
       </macros>
     </template>

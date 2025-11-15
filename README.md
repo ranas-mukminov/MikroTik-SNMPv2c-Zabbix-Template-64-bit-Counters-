@@ -1,14 +1,14 @@
 # MikroTik SNMPv2c Zabbix Template (64-bit Counters)
 
-This repository provides a Zabbix 7.0+ ready template for MikroTik routers that focuses on reliable SNMPv2c polling using 64-bit c
-ounters, best-practice preprocessing and automatic interface discovery.
+This repository provides a Zabbix 7.0+ ready template for MikroTik routers that focuses on reliable SNMPv2c polling using 64-bit counters, best-practice preprocessing and automatic interface discovery.
 
 ## Features
 
 - 📡 SNMPv2c template with configurable community macro (`{$SNMP_COMMUNITY}`)
-- 🔍 Interface low-level discovery (LLD) for physical and logical ports (loopbacks/virtual links excluded by default)
+- 🔍 Interface low-level discovery (LLD) for routed and switching ports with alias capture and admin-status filtering
 - 📈 64-bit inbound/outbound bandwidth converted to bits per second with change-per-second preprocessing
-- 🚨 Trigger prototype to alert when an interface operational status transitions to *down*
+- 📝 Interface alias and configured speed captured for richer dashboards
+- ⚠️ Trigger prototypes for link-down and high error rate conditions with macro-controlled thresholds
 - 🧮 Error rate monitoring for inbound/outbound errors (per-second delta)
 - 🧾 System uptime (converted from timeticks) and descriptive inventory information
 - ✅ Compatible with Zabbix 7.0+ and uses stable 32-character UUIDs
@@ -24,8 +24,11 @@ ounters, best-practice preprocessing and automatic interface discovery.
 ## Customisation tips
 
 - Override `{$SNMP_COMMUNITY}` per host to match your MikroTik SNMPv2c community string.
-- Adjust the discovery rule filter regex if you need to include (or exclude) additional interface types.
+- Tune the LLD include/exclude patterns via `{$IF.LLD.FILTER.MATCH}` / `{$IF.LLD.FILTER.NOT_MATCHES}` macros to align with your naming conventions.
+- Require specific administrative states with `{$IF.LLD.FILTER.ADMIN_STATUS}` (defaults to only "up" interfaces).
+- Surface interface alias text in Zabbix via the `{#IFALIAS}` discovery macro and alias item for better dashboards.
 - Tune polling intervals on the prototypes when monitoring very high-throughput links to match your retention needs.
+- Override trigger thresholds such as `{$IF.ERRORS.MAX_DELTA}` to match the acceptable error rate for your links.
 
 ## Помощь в настройке MikroTik для организаций
 
