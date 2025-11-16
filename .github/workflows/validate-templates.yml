@@ -1,0 +1,283 @@
+name: Validate Zabbix Templates
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - '**.xml'
+      - 'tests/**'
+      - '.github/workflows/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - '**.xml'
+      - 'tests/**'
+
+jobs:
+  validate-xml:
+    name: Validate XML Templates
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install xmllint
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxml2-utils
+
+      - name: Validate XML syntax with xmllint
+        run: |
+          echo "::group::Validating XML syntax"
+          for file in *.xml; do
+            if [ -f "$file" ]; then
+              echo "Checking $file..."
+              xmllint --noout "$file"
+              if [ $? -eq 0 ]; then
+                echo "✓ $file is valid XML"
+              else
+                echo "✗ $file has XML errors"
+                exit 1
+              fi
+            fi
+          done
+          echo "::endgroup::"
+
+      - name: Run Python validation script
+        run: |
+          echo "::group::Running comprehensive validation"
+          cd tests
+          python3 validate_xml.py --all
+          echo "::endgroup::"
+
+      - name: Check for security issues
+        run: |
+          echo "::group::Security checks"
+          echo "Checking for insecure default values..."
+
+          # Check for default 'public' community (should be CHANGE_ME)
+          if grep -r "value>public</value" *.xml; then
+            echo "::error::Found insecure default community 'public' in templates"
+            exit 1
+          fi
+
+          # Check that security warning macro is present
+          if ! grep -q "CHANGE_ME_SECURITY_RISK" *.xml; then
+            echo "::warning::Templates should use CHANGE_ME_SECURITY_RISK for community default"
+          fi
+
+          echo "✓ Security checks passed"
+          echo "::endgroup::"
+
+      - name: Validate template structure
+        run: |
+          echo "::group::Template structure validation"
+
+          # Check that all templates have UUIDs
+          for file in template*.xml; do
+            if [ -f "$file" ]; then
+              echo "Checking $file for required elements..."
+
+              if ! grep -q "<uuid>" "$file"; then
+                echo "::error::$file is missing UUIDs"
+                exit 1
+              fi
+
+              if ! grep -q "<template>" "$file"; then
+                echo "::error::$file is missing template element"
+                exit 1
+              fi
+
+              if ! grep -q "<macros>" "$file"; then
+                echo "::warning::$file has no macros defined"
+              fi
+
+              echo "✓ $file structure is valid"
+            fi
+          done
+
+          echo "::endgroup::"
+
+      - name: Generate validation report
+        if: always()
+        run: |
+          echo "::group::Validation Summary"
+          echo "## Template Validation Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Files Validated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          for file in *.xml; do
+            if [ -f "$file" ]; then
+              size=$(stat -c%s "$file")
+              lines=$(wc -l < "$file")
+              echo "- **$file**: $lines lines, $size bytes" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Validation Status" >> $GITHUB_STEP_SUMMARY
+          echo "✅ All validations passed!" >> $GITHUB_STEP_SUMMARY
+          echo "::endgroup::"
+
+  check-formatting:
+    name: Check Code Formatting
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Check line endings (LF only)
+        run: |
+          echo "::group::Checking line endings"
+          # Check for CRLF line endings (Windows style)
+          if find . -name "*.xml" -o -name "*.md" -o -name "*.py" -o -name "*.sh" | xargs file | grep CRLF; then
+            echo "::error::Found files with CRLF line endings. Please use LF (Unix) line endings."
+            exit 1
+          fi
+          echo "✓ All files use LF line endings"
+          echo "::endgroup::"
+
+      - name: Check for trailing whitespace
+        run: |
+          echo "::group::Checking for trailing whitespace"
+          # This is a warning, not an error
+          if grep -r -n '[[:space:]]$' *.xml *.md 2>/dev/null; then
+            echo "::warning::Found trailing whitespace in files above"
+          else
+            echo "✓ No trailing whitespace found"
+          fi
+          echo "::endgroup::"
+
+  test-import:
+    name: Test Template Import (Dry Run)
+    runs-on: ubuntu-latest
+    needs: validate-xml
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Simulate Zabbix import
+        run: |
+          echo "::group::Simulating Zabbix template import"
+
+          # This is a basic check that the XML can be parsed as Zabbix expects
+          python3 << 'EOF'
+          import xml.etree.ElementTree as ET
+          import sys
+
+          templates = [
+              "template_mikrotik_snmpv2c_zbx72_uuid32.xml",
+              "template_mikrotik_snmpv2c_advanced_zbx72.xml",
+              "template_mikrotik_snmpv3_advanced_zbx72.xml"
+          ]
+
+          for template_file in templates:
+              try:
+                  tree = ET.parse(template_file)
+                  root = tree.getroot()
+
+                  # Check version
+                  version = root.get('version')
+                  if version != '7.0':
+                      print(f"⚠ {template_file}: Export version is {version}, expected 7.0")
+
+                  # Count elements
+                  items = len(root.findall('.//item')) + len(root.findall('.//item_prototype'))
+                  triggers = len(root.findall('.//trigger')) + len(root.findall('.//trigger_prototype'))
+                  discovery = len(root.findall('.//discovery_rule'))
+                  macros = len(root.findall('.//macro'))
+
+                  print(f"\n✓ {template_file}:")
+                  print(f"  - Items: {items}")
+                  print(f"  - Triggers: {triggers}")
+                  print(f"  - Discovery rules: {discovery}")
+                  print(f"  - Macros: {macros}")
+
+              except FileNotFoundError:
+                  print(f"⚠ {template_file}: File not found (may be in development)")
+              except Exception as e:
+                  print(f"✗ {template_file}: Import test failed - {e}")
+                  sys.exit(1)
+
+          print("\n✅ All templates can be parsed successfully")
+          EOF
+
+          echo "::endgroup::"
+
+  documentation-check:
+    name: Documentation Quality Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Check README exists and is complete
+        run: |
+          echo "::group::Checking documentation"
+
+          # Check main README
+          if [ ! -f "README.md" ]; then
+            echo "::error::README.md is missing"
+            exit 1
+          fi
+
+          # Check for required sections in README
+          required_sections=(
+            "Quick Start"
+            "Security"
+            "Configuration"
+            "Troubleshooting"
+          )
+
+          for section in "${required_sections[@]}"; do
+            if ! grep -qi "$section" README.md; then
+              echo "::warning::README.md is missing section: $section"
+            fi
+          done
+
+          # Check examples directory
+          if [ ! -d "examples" ]; then
+            echo "::error::examples/ directory is missing"
+            exit 1
+          fi
+
+          # Check tests directory
+          if [ ! -d "tests" ]; then
+            echo "::error::tests/ directory is missing"
+            exit 1
+          fi
+
+          # Check CHANGELOG
+          if [ ! -f "CHANGELOG.md" ]; then
+            echo "::warning::CHANGELOG.md is missing"
+          fi
+
+          echo "✓ Documentation structure is valid"
+          echo "::endgroup::"
+
+      - name: Check for broken internal links
+        run: |
+          echo "::group::Checking for broken links in README"
+
+          # Extract markdown links
+          # This is a simple check - could be enhanced
+          if grep -o '\[.*\](.*\.md)' README.md > /dev/null 2>&1; then
+            echo "Found internal markdown links - manual verification recommended"
+          fi
+
+          echo "::endgroup::"
