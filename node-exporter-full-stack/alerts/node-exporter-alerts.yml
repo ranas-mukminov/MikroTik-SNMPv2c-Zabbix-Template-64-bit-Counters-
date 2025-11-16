@@ -1,0 +1,51 @@
+groups:
+  - name: node_exporter.rules
+    rules:
+      - alert: NodeDown
+        expr: up{job="node"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.instance }} is not reachable"
+          description: Prometheus has failed to scrape {{ $labels.instance }} for 2 minutes.
+      - alert: NodeHighCpuSustained
+        expr: avg by (instance) (rate(node_cpu_seconds_total{mode!="idle",job="node"}[5m])) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.instance }} has CPU usage > 85%"
+          description: Sustained CPU saturation indicates runaway processes or capacity limits.
+      - alert: NodeMemoryPressure
+        expr: (node_memory_MemAvailable_bytes{job="node"} / node_memory_MemTotal_bytes{job="node"}) < 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.instance }} is low on free memory"
+          description: Less than 10% memory available; swap or OOM events may follow.
+      - alert: NodeDiskSpaceLow
+        expr: (node_filesystem_avail_bytes{job="node",fstype!~"tmpfs|overlay|aufs"} / node_filesystem_size_bytes{job="node",fstype!~"tmpfs|overlay|aufs"}) < 0.15
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.instance }} {{ $labels.mountpoint }} disk space <15%"
+          description: Filesystem {{ $labels.mountpoint }} on {{ $labels.instance }} is nearly full; free space or expand capacity.
+      - alert: NodeFilesystemReadonly
+        expr: node_filesystem_readonly{job="node",fstype!~"tmpfs|overlay|aufs"} == 1
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.instance }} {{ $labels.mountpoint }} is read-only"
+          description: Filesystem has switched to read-only; investigate disk errors immediately.
+      - alert: NodeNetworkErrorsBurst
+        expr: rate(node_network_receive_errs_total{job="node"}[5m]) + rate(node_network_transmit_errs_total{job="node"}[5m]) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.instance }} network errors detected"
+          description: RX/TX errors exceed 1 per second. Check cables, NICs, or drivers.

@@ -1,0 +1,25 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    environment: demo
+
+rule_files:
+  - /etc/prometheus/alerts/node-exporter-alerts.yml
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets:
+          - prometheus:9090
+
+  - job_name: node
+    static_configs:
+      - targets:
+          - node-exporter:9100
+        labels:
+          instance: demo-node
+    metric_relabel_configs:
+      - source_labels: [fstype]
+        regex: "tmpfs|devtmpfs"
+        action: drop
