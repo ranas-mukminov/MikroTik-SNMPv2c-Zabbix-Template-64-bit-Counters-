@@ -132,13 +132,16 @@ examples/mikrotik_snmpv3_host.md      – new SNMPv3 example
 
 Show **complete final content** for each file (not diffs):
 
-```markdown
+Example format:
+
+````markdown
 <!-- README.md -->
 ```markdown
 # MikroTik SNMP Zabbix Templates (Production-Ready v2.1)
 ...
 [full file content]
 ```
+````
 
 Rules:
 - Output **entire** file content (no truncation)
