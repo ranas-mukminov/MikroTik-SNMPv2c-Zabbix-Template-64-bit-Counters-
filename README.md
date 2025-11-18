@@ -128,10 +128,14 @@ Within a few minutes, Zabbix will start collecting data. Check **Monitoring → 
 
 The template uses macros for flexible configuration. Override these macros at the host or template level as needed.
 
+> **Important:** The default `{$SNMP_COMMUNITY}` macro ships with a placeholder value `CHANGE_ME_SNMPV2C`. Always override this macro for every MikroTik host or, at minimum, each host group so that every router uses its own community string. Never keep the placeholder value in production.
+
+For environments that require stronger security or operate over untrusted networks, prefer configuring SNMPv3 with authentication and privacy on the MikroTik and in Zabbix. SNMPv3 can be used alongside this template by setting the appropriate credentials on each host.
+
 ### SNMP Authentication
 | Macro | Default | Description |
 |-------|---------|-------------|
-| `{$SNMP_COMMUNITY}` | `CHANGE_ME_SECURITY_RISK` | SNMPv2c community string |
+| `{$SNMP_COMMUNITY}` | `CHANGE_ME_SNMPV2C` | SNMPv2c community string |
 
 ### Interface Discovery Filters
 | Macro | Default | Description |

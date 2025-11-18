@@ -303,7 +303,7 @@
       <macros>
         <macro>
           <macro>{$SNMP_COMMUNITY}</macro>
-          <value>public</value>
+          <value>CHANGE_ME_SNMPV2C</value>
           <description>Default SNMP community string for SNMPv2c (override on hosts).</description>
         </macro>
         <macro>
