@@ -34,6 +34,7 @@ On high-speed links (1 Gbps and above), 32-bit SNMP counters can wrap around in 
 - Hardware temperature monitoring (MikroTik-specific OID)
 - Power supply voltage monitoring
 - RouterOS version and serial number inventory
+- Automatic host inventory population (type, name, location)
 
 ### Routing Protocols
 - OSPF neighbor discovery and state monitoring
@@ -97,6 +98,8 @@ snmpwalk -v2c -c MySecureCommunity <mikrotik-ip> system
 
 After import, the template will appear as `Template MikroTik SNMPv2c Advanced (Production)` under **Templates/Network devices**.
 
+> **⚠️ Mandatory security action:** The template intentionally ships with the placeholder `CHANGE_ME_SNMPV2C` for the `{$SNMP_COMMUNITY}` macro. Override this macro per host (or per secure host group) immediately after import—otherwise discovery and polling will fail, and you risk falling back to the insecure, guessable `public` string if someone reuses RouterOS defaults. For encrypted/authenticated monitoring prefer the bundled **RouterOS SNMPv3 template** (`template_mikrotik_snmpv3_advanced_zbx72.xml`).
+
 ---
 
 ## Linking Template to Host
@@ -122,16 +125,45 @@ After import, the template will appear as `Template MikroTik SNMPv2c Advanced (P
 
 Within a few minutes, Zabbix will start collecting data. Check **Monitoring → Latest data** to verify.
 
+### Host Inventory Auto-Population
+
+Zabbix can automatically fill host inventory fields with the SNMP system information gathered by this template.
+
+- **Type** → populated from the `System description` item (`sysDescr.0`)
+- **Name** → populated from the `System name` item (`sysName.0`)
+- **Location** → populated from the `System location` item (`sysLocation.0`)
+
+**Prerequisites:**
+
+1. Enable host inventory globally (Zabbix UI: **Administration → General → Inventory** and set **Enable host inventory mode** to `Manual` or `Automatic`).
+2. For each MikroTik host using this template, open **Configuration → Hosts → [Host] → Inventory** and set **Mode** to `Automatic` so the above items can write directly into the inventory fields.
+3. Ensure the Zabbix user role permits editing host inventory (required for automatic updates).
+### Host Inventory population
+
+This template links several SNMP items to the Zabbix host inventory so key context is filled in automatically:
+
+| Template item | SNMP source | Inventory field |
+|---------------|-------------|-----------------|
+| `system.descr[sysDescr]` | `SNMPv2-MIB::sysDescr.0` | **Type** |
+| `system.name` *(advanced template)* | `SNMPv2-MIB::sysName.0` | **Name** |
+| `system.location` *(advanced template)* | `SNMPv2-MIB::sysLocation.0` | **Location** |
+
+To allow Zabbix to write these values, enable the host inventory and set the **Inventory mode** to **Automatic** (Configuration → Hosts → select the host → **Inventory** tab). Zabbix will then populate the above fields as soon as the associated items receive data.
+
 ---
 
 ## Macros & Customization
 
 The template uses macros for flexible configuration. Override these macros at the host or template level as needed.
 
+> **Important:** The default `{$SNMP_COMMUNITY}` macro ships with a placeholder value `CHANGE_ME_SNMPV2C`. Always override this macro for every MikroTik host or, at minimum, each host group so that every router uses its own community string. Never keep the placeholder value in production.
+
+For environments that require stronger security or operate over untrusted networks, prefer configuring SNMPv3 with authentication and privacy on the MikroTik and in Zabbix. SNMPv3 can be used alongside this template by setting the appropriate credentials on each host.
+
 ### SNMP Authentication
 | Macro | Default | Description |
 |-------|---------|-------------|
-| `{$SNMP_COMMUNITY}` | `CHANGE_ME_SECURITY_RISK` | SNMPv2c community string |
+| `{$SNMP_COMMUNITY}` | `CHANGE_ME_SNMPV2C` | SNMPv2c community string |
 
 ### Interface Discovery Filters
 | Macro | Default | Description |
@@ -283,6 +315,19 @@ Planned improvements for future releases:
 - Add wireless client monitoring for MikroTik wireless access points
 
 Contributions and suggestions are welcome. See the [Contributing](#contributing) section below.
+
+---
+
+## Local Testing
+
+Structural checks for every `template_*.xml` file live under `tests/` and can be run with `pytest`. This is the same command the CI workflow executes on every pull request.
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python -m pytest
+```
 
 ---
 

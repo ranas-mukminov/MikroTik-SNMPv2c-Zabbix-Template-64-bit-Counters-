@@ -49,6 +49,7 @@
           <trends>0</trends>
           <status>ENABLED</status>
           <value_type>TEXT</value_type>
+          <inventory_link>TYPE</inventory_link>
           <tags>
             <tag>
               <tag>Application</tag>
@@ -56,6 +57,46 @@
             </tag>
           </tags>
           <description>Full system description to verify the SNMP agent identity.</description>
+        </item>
+        <item>
+          <uuid>5f533e0ec14c4cb79e8236574d73108d</uuid>
+          <name>System name</name>
+          <type>SNMP_AGENT</type>
+          <snmp_oid>SNMPv2-MIB::sysName.0</snmp_oid>
+          <key>system.name[sysName]</key>
+          <delay>1h</delay>
+          <history>7d</history>
+          <trends>0</trends>
+          <status>ENABLED</status>
+          <value_type>TEXT</value_type>
+          <inventory_link>NAME</inventory_link>
+          <tags>
+            <tag>
+              <tag>Application</tag>
+              <value>System</value>
+            </tag>
+          </tags>
+          <description>Device hostname (sysName) used for automatic inventory population.</description>
+        </item>
+        <item>
+          <uuid>fce8597112984cdbb79c02c42d2ac99c</uuid>
+          <name>System location</name>
+          <type>SNMP_AGENT</type>
+          <snmp_oid>SNMPv2-MIB::sysLocation.0</snmp_oid>
+          <key>system.location[sysLocation]</key>
+          <delay>1h</delay>
+          <history>7d</history>
+          <trends>0</trends>
+          <status>ENABLED</status>
+          <value_type>TEXT</value_type>
+          <inventory_link>LOCATION</inventory_link>
+          <tags>
+            <tag>
+              <tag>Application</tag>
+              <value>System</value>
+            </tag>
+          </tags>
+          <description>Physical or logical location string reported by the device.</description>
         </item>
       </items>
       <discovery_rules>
@@ -303,7 +344,7 @@
       <macros>
         <macro>
           <macro>{$SNMP_COMMUNITY}</macro>
-          <value>public</value>
+          <value>CHANGE_ME_SNMPV2C</value>
           <description>Default SNMP community string for SNMPv2c (override on hosts).</description>
         </macro>
         <macro>

@@ -24,7 +24,7 @@ This is a complete rewrite of the templates with enterprise-grade features and s
 
 #### Security
 - ✅ **SNMPv3 template** with authentication (SHA/MD5) and encryption (AES/DES)
-- ✅ **Secure defaults**: Changed default community from "public" to "CHANGE_ME_SECURITY_RISK" to prevent accidental production deployment
+- ✅ **Secure defaults**: Changed default community from "public" to "CHANGE_ME_SNMPV2C" to prevent accidental production deployment
 - ✅ **Security documentation** with SNMPv2c mitigation strategies and SNMPv3 configuration guide
 
 #### System Monitoring
@@ -120,7 +120,7 @@ This is a complete rewrite of the templates with enterprise-grade features and s
 - 🔄 **All resource triggers** use multi-level severity (warning at 80%, critical at 90%)
 
 #### Macros
-- 🔄 **`{$SNMP_COMMUNITY}`** default changed from "public" to "CHANGE_ME_SECURITY_RISK"
+- 🔄 **`{$SNMP_COMMUNITY}`** default changed from "public" to "CHANGE_ME_SNMPV2C"
 - 🔄 **Discovery filters** made more comprehensive and documented
 - 🔄 **All thresholds** now configurable via macros (previously hardcoded)
 
@@ -135,7 +135,7 @@ This is a complete rewrite of the templates with enterprise-grade features and s
 ### Security
 
 #### Breaking Changes
-- ⚠️ **Default SNMP community changed** from "public" to "CHANGE_ME_SECURITY_RISK"
+- ⚠️ **Default SNMP community changed** from "public" to "CHANGE_ME_SNMPV2C"
   - **Impact**: Templates will not work without explicitly configuring community string
   - **Rationale**: Prevents accidental production deployment with insecure defaults
   - **Migration**: Override `{$SNMP_COMMUNITY}` macro at host level with your actual community string
