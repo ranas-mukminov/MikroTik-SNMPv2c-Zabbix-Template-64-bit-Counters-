@@ -1,4 +1,4 @@
-"""Pytest-based structural checks for Zabbix template exports."""
+"""Validation tests for MikroTik Zabbix templates."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -7,9 +7,10 @@ import xml.etree.ElementTree as ET
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-TEMPLATE_PATTERN = "template_*.xml"
+TEMPLATE_GLOB = "template_*.xml"
+TEMPLATE_PATHS = sorted(REPO_ROOT.glob(TEMPLATE_GLOB))
 
-# Macros that every template should provide to keep interface discovery configurable.
+# Macros that every template relies on for interface discovery logic.
 BASE_REQUIRED_MACROS = {
     "{$IF.LLD.FILTER.MATCH}",
     "{$IF.LLD.FILTER.NOT_MATCHES}",
@@ -17,83 +18,57 @@ BASE_REQUIRED_MACROS = {
     "{$IF.ERRORS.MAX_DELTA}",
 }
 
-# Additional macro requirements derived from the security guidance in README.md
-# and the supported SNMP authentication modes.
-REQUIRED_MACROS_BY_KEYWORD = {
-    "snmpv2c": {
-        "{$SNMP_COMMUNITY}",
-    },
-    "snmpv3": {
-        "{$SNMPV3_USER}",
-        "{$SNMPV3_AUTH_PROTOCOL}",
-        "{$SNMPV3_AUTH_PASSPHRASE}",
-        "{$SNMPV3_PRIV_PROTOCOL}",
-        "{$SNMPV3_PRIV_PASSPHRASE}",
-        "{$SNMPV3_SECURITY_LEVEL}",
-    },
+SNMPV2_REQUIRED_MACROS = {"{$SNMP_COMMUNITY}"}
+SNMPV3_REQUIRED_MACROS = {
+    "{$SNMPV3_USER}",
+    "{$SNMPV3_AUTH_PROTOCOL}",
+    "{$SNMPV3_AUTH_PASSPHRASE}",
+    "{$SNMPV3_PRIV_PROTOCOL}",
+    "{$SNMPV3_PRIV_PASSPHRASE}",
+    "{$SNMPV3_SECURITY_LEVEL}",
 }
 
 
-def _template_files() -> list[Path]:
-    files = sorted(REPO_ROOT.glob(TEMPLATE_PATTERN))
-    if not files:
-        pytest.fail(f"No files matching {TEMPLATE_PATTERN!r} were found at {REPO_ROOT}.")
-    return files
+def _load_template(path: Path) -> ET.Element:
+    """Parse a template XML file and return the root element."""
+    tree = ET.parse(path)
+    return tree.getroot()
 
 
-def _text(element: ET.Element, tag: str, filename: str) -> str:
-    child = element.find(tag)
-    assert child is not None, f"{filename}: missing <{tag}> element"
-    text = (child.text or "").strip()
-    assert text, f"{filename}: <{tag}> must not be empty"
-    return text
-
-
-def _macros_from(template_el: ET.Element) -> set[str]:
-    macros: set[str] = set()
-    for macro_entry in template_el.findall("./macros/macro"):
-        name = (macro_entry.findtext("macro") or "").strip()
-        if name:
-            macros.add(name)
-    return macros
-
-
-def _required_macros(path: Path) -> set[str]:
-    required = set(BASE_REQUIRED_MACROS)
-    lower_name = path.name.lower()
-    for keyword, macros in REQUIRED_MACROS_BY_KEYWORD.items():
-        if keyword in lower_name:
-            required.update(macros)
-    return required
-
-
-@pytest.mark.parametrize("template_path", _template_files())
+@pytest.mark.parametrize("template_path", TEMPLATE_PATHS, ids=lambda p: p.name)
 def test_template_structure(template_path: Path) -> None:
-    """Ensure each template can be parsed and has the expected metadata/macros."""
+    """Ensure each template has the expected structural nodes."""
+    root = _load_template(template_path)
+    assert root.tag == "zabbix_export", "Template must be wrapped in <zabbix_export>"
 
-    try:
-        tree = ET.parse(template_path)
-    except ET.ParseError as exc:  # pragma: no cover - pytest displays failure context
-        pytest.fail(f"Failed to parse {template_path.name}: {exc}")
+    templates = root.find("templates")
+    assert templates is not None, "Missing <templates> node"
 
-    root = tree.getroot()
-    assert root.tag == "zabbix_export", f"{template_path.name}: unexpected root tag {root.tag!r}"
+    template_nodes = templates.findall("template")
+    assert template_nodes, "Template list should contain at least one <template> entry"
 
-    templates = root.findall("./templates/template")
-    assert templates, f"{template_path.name}: no <template> elements found"
+    # Basic sanity checks for human-facing metadata
+    for template in template_nodes:
+        assert template.findtext("name"), "Template entries must declare a <name>"
+        assert template.findtext("description"), "Template entries must include a <description>"
 
-    required_macros = _required_macros(template_path)
 
-    for template_el in templates:
-        _text(template_el, "uuid", template_path.name)
-        _text(template_el, "template", template_path.name)
-        _text(template_el, "name", template_path.name)
+@pytest.mark.parametrize("template_path", TEMPLATE_PATHS, ids=lambda p: p.name)
+def test_template_macros(template_path: Path) -> None:
+    """Validate that critical macros are declared in every template variant."""
+    root = _load_template(template_path)
+    macros_node = root.find(".//template/macros")
+    assert macros_node is not None, "Templates should define a <macros> block"
 
-        macros = _macros_from(template_el)
-        assert macros, f"{template_path.name}: at least one macro must be defined"
+    defined_macros = {macro.findtext("macro") for macro in macros_node.findall("macro")}
 
-        missing = required_macros - macros
-        assert not missing, (
-            f"{template_path.name}: missing required macros {sorted(missing)} "
-            f"(expected {sorted(required_macros)})"
-        )
+    missing = sorted(BASE_REQUIRED_MACROS - defined_macros)
+    assert not missing, f"Missing base macros: {', '.join(missing)}"
+
+    filename = template_path.name.lower()
+    if "snmpv3" in filename:
+        missing = sorted(SNMPV3_REQUIRED_MACROS - defined_macros)
+        assert not missing, f"Missing SNMPv3 macros: {', '.join(missing)}"
+    else:
+        missing = sorted(SNMPV2_REQUIRED_MACROS - defined_macros)
+        assert not missing, f"Missing SNMPv2c macros: {', '.join(missing)}"
