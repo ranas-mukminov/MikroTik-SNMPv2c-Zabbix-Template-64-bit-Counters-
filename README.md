@@ -267,6 +267,19 @@ Contributions and suggestions are welcome. See the [Contributing](#contributing)
 
 ---
 
+## Local Testing
+
+Structural checks for every `template_*.xml` file live under `tests/` and can be run with `pytest`. This is the same command the CI workflow executes on every pull request.
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python -m pytest
+```
+
+---
+
 ## Contributing
 
 Contributions are welcome! To contribute:
