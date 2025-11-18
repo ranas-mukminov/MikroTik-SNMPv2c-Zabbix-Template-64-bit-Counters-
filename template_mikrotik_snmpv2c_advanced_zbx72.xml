@@ -1550,7 +1550,7 @@ Version: 2.0.0</description>
         <!-- SNMP Configuration -->
         <macro>
           <macro>{$SNMP_COMMUNITY}</macro>
-          <value>CHANGE_ME_SECURITY_RISK</value>
+          <value>CHANGE_ME_SNMPV2C</value>
           <description>⚠️ SECURITY: Change this to your private SNMP community string! Default 'public' is a security risk!</description>
         </macro>
 
