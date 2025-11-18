@@ -34,6 +34,7 @@ On high-speed links (1 Gbps and above), 32-bit SNMP counters can wrap around in 
 - Hardware temperature monitoring (MikroTik-specific OID)
 - Power supply voltage monitoring
 - RouterOS version and serial number inventory
+- Automatic host inventory population (type, name, location)
 
 ### Routing Protocols
 - OSPF neighbor discovery and state monitoring
@@ -124,6 +125,19 @@ After import, the template will appear as `Template MikroTik SNMPv2c Advanced (P
 
 Within a few minutes, Zabbix will start collecting data. Check **Monitoring → Latest data** to verify.
 
+### Host Inventory Auto-Population
+
+Zabbix can automatically fill host inventory fields with the SNMP system information gathered by this template.
+
+- **Type** → populated from the `System description` item (`sysDescr.0`)
+- **Name** → populated from the `System name` item (`sysName.0`)
+- **Location** → populated from the `System location` item (`sysLocation.0`)
+
+**Prerequisites:**
+
+1. Enable host inventory globally (Zabbix UI: **Administration → General → Inventory** and set **Enable host inventory mode** to `Manual` or `Automatic`).
+2. For each MikroTik host using this template, open **Configuration → Hosts → [Host] → Inventory** and set **Mode** to `Automatic` so the above items can write directly into the inventory fields.
+3. Ensure the Zabbix user role permits editing host inventory (required for automatic updates).
 ### Host Inventory population
 
 This template links several SNMP items to the Zabbix host inventory so key context is filled in automatically:
