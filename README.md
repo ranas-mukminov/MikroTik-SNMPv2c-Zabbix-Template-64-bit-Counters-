@@ -97,6 +97,8 @@ snmpwalk -v2c -c MySecureCommunity <mikrotik-ip> system
 
 After import, the template will appear as `Template MikroTik SNMPv2c Advanced (Production)` under **Templates/Network devices**.
 
+> **⚠️ Mandatory security action:** The template intentionally ships with the placeholder `CHANGE_ME_SNMPV2C` for the `{$SNMP_COMMUNITY}` macro. Override this macro per host (or per secure host group) immediately after import—otherwise discovery and polling will fail, and you risk falling back to the insecure, guessable `public` string if someone reuses RouterOS defaults. For encrypted/authenticated monitoring prefer the bundled **RouterOS SNMPv3 template** (`template_mikrotik_snmpv3_advanced_zbx72.xml`).
+
 ---
 
 ## Linking Template to Host
@@ -121,6 +123,18 @@ After import, the template will appear as `Template MikroTik SNMPv2c Advanced (P
 9. Click **Add** or **Update**
 
 Within a few minutes, Zabbix will start collecting data. Check **Monitoring → Latest data** to verify.
+
+### Host Inventory population
+
+This template links several SNMP items to the Zabbix host inventory so key context is filled in automatically:
+
+| Template item | SNMP source | Inventory field |
+|---------------|-------------|-----------------|
+| `system.descr[sysDescr]` | `SNMPv2-MIB::sysDescr.0` | **Type** |
+| `system.name` *(advanced template)* | `SNMPv2-MIB::sysName.0` | **Name** |
+| `system.location` *(advanced template)* | `SNMPv2-MIB::sysLocation.0` | **Location** |
+
+To allow Zabbix to write these values, enable the host inventory and set the **Inventory mode** to **Automatic** (Configuration → Hosts → select the host → **Inventory** tab). Zabbix will then populate the above fields as soon as the associated items receive data.
 
 ---
 
@@ -268,6 +282,19 @@ Planned improvements for future releases:
 - Add wireless client monitoring for MikroTik wireless access points
 
 Contributions and suggestions are welcome. See the [Contributing](#contributing) section below.
+
+---
+
+## Local Testing
+
+Structural checks for every `template_*.xml` file live under `tests/` and can be run with `pytest`. This is the same command the CI workflow executes on every pull request.
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python -m pytest
+```
 
 ---
 

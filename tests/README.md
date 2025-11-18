@@ -217,7 +217,7 @@ print(uuid.uuid4().hex)
 **Problem:** "Security risk: Macro uses default 'public' value"
 ```bash
 # This is intentional for security
-# The default community is now "CHANGE_ME_SECURITY_RISK"
+# The default community is now "CHANGE_ME_SNMPV2C"
 # Override with secure value at host level
 ```
 

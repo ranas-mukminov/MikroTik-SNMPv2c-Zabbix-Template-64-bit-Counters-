@@ -49,6 +49,7 @@
           <trends>0</trends>
           <status>ENABLED</status>
           <value_type>TEXT</value_type>
+          <inventory_link>TYPE</inventory_link>
           <tags>
             <tag>
               <tag>Application</tag>
