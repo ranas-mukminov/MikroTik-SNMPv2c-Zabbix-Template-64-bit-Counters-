@@ -252,6 +252,25 @@ This template is designed to use 64-bit counters by default. If a MikroTik devic
 
 ---
 
+## Testing
+
+Lightweight automated checks help ensure the Zabbix templates stay valid. The
+project ships with a small pytest suite that loads every `template_*.xml` file,
+parses it with Python's `xml.etree.ElementTree`, and verifies that the required
+structural nodes and macros are present.
+
+Run the tests locally with:
+
+```bash
+python3 -m pip install --upgrade pytest
+pytest
+```
+
+The same test suite runs in CI (see `.github/workflows/validate-templates.yml`)
+so keeping it green locally avoids surprises in pull requests.
+
+---
+
 ## Roadmap
 
 Planned improvements for future releases:
