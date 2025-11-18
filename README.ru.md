@@ -131,7 +131,7 @@ snmpwalk -v2c -c МойБезопасныйКлюч <ip-адрес-mikrotik> sys
 ### Аутентификация SNMP
 | Макрос | По умолчанию | Описание |
 |--------|--------------|----------|
-| `{$SNMP_COMMUNITY}` | `CHANGE_ME_SECURITY_RISK` | Строка community для SNMPv2c |
+| `{$SNMP_COMMUNITY}` | `CHANGE_ME_SNMPV2C` | Строка community для SNMPv2c |
 
 ### Фильтры обнаружения интерфейсов
 | Макрос | По умолчанию | Описание |

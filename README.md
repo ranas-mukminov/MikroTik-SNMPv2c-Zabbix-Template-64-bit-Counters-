@@ -97,6 +97,8 @@ snmpwalk -v2c -c MySecureCommunity <mikrotik-ip> system
 
 After import, the template will appear as `Template MikroTik SNMPv2c Advanced (Production)` under **Templates/Network devices**.
 
+> **⚠️ Mandatory security action:** The template intentionally ships with the placeholder `CHANGE_ME_SNMPV2C` for the `{$SNMP_COMMUNITY}` macro. Override this macro per host (or per secure host group) immediately after import—otherwise discovery and polling will fail, and you risk falling back to the insecure, guessable `public` string if someone reuses RouterOS defaults. For encrypted/authenticated monitoring prefer the bundled **RouterOS SNMPv3 template** (`template_mikrotik_snmpv3_advanced_zbx72.xml`).
+
 ---
 
 ## Linking Template to Host
@@ -128,10 +130,12 @@ Within a few minutes, Zabbix will start collecting data. Check **Monitoring → 
 
 The template uses macros for flexible configuration. Override these macros at the host or template level as needed.
 
+> **Why override `{$SNMP_COMMUNITY}` per host?** Using a single community across all routers (especially `public`) exposes your entire network inventory and configuration to anyone who can reach UDP/161. Set a unique, random string on each MikroTik (or at least per secure group) and mirror it in the host or group macro. Never leave RouterOS at the `public` default—attackers routinely scan for it, and it grants read access to routing tables, interface stats, and inventory data.
+
 ### SNMP Authentication
 | Macro | Default | Description |
 |-------|---------|-------------|
-| `{$SNMP_COMMUNITY}` | `CHANGE_ME_SECURITY_RISK` | SNMPv2c community string |
+| `{$SNMP_COMMUNITY}` | `CHANGE_ME_SNMPV2C` | SNMPv2c community string (must be overridden per host/group) |
 
 ### Interface Discovery Filters
 | Macro | Default | Description |
