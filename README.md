@@ -122,6 +122,18 @@ After import, the template will appear as `Template MikroTik SNMPv2c Advanced (P
 
 Within a few minutes, Zabbix will start collecting data. Check **Monitoring → Latest data** to verify.
 
+### Host Inventory population
+
+This template links several SNMP items to the Zabbix host inventory so key context is filled in automatically:
+
+| Template item | SNMP source | Inventory field |
+|---------------|-------------|-----------------|
+| `system.descr[sysDescr]` | `SNMPv2-MIB::sysDescr.0` | **Type** |
+| `system.name` *(advanced template)* | `SNMPv2-MIB::sysName.0` | **Name** |
+| `system.location` *(advanced template)* | `SNMPv2-MIB::sysLocation.0` | **Location** |
+
+To allow Zabbix to write these values, enable the host inventory and set the **Inventory mode** to **Automatic** (Configuration → Hosts → select the host → **Inventory** tab). Zabbix will then populate the above fields as soon as the associated items receive data.
+
 ---
 
 ## Macros & Customization
