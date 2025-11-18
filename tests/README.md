@@ -6,6 +6,25 @@ This directory contains validation and testing scripts for the MikroTik Zabbix t
 
 ## 📁 Files
 
+### [run_checks.sh](run_checks.sh)
+**Convenience wrapper to execute all static checks locally**
+
+**Features:**
+- ✅ Runs `validate_xml.py --all` against every template in one command
+- ✅ Uses the system `python3` (override via `PYTHON_BIN=/path/to/python`)
+- ✅ Exits with non-zero status when validation fails (CI-friendly)
+
+**Usage:**
+```bash
+chmod +x run_checks.sh
+./run_checks.sh
+
+# or force a different interpreter
+PYTHON_BIN=python3.11 ./run_checks.sh
+```
+
+---
+
 ### [validate_xml.py](validate_xml.py)
 **Python script to validate Zabbix template XML files**
 

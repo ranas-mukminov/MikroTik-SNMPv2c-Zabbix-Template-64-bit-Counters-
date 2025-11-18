@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- 🧪 `tests/run_checks.sh` helper to run XML validation for all templates in one command
+
+### Changed
+- 📚 `README.md` now includes a post-import verification checklist referencing the new static checks
+- 📚 `tests/README.md` documents how to run the aggregated validation script
+
 ## [2.0.0] - 2025-01-16
 
 ### 🎉 Major Release - Production-Ready Templates

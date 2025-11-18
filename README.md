@@ -179,6 +179,28 @@ Wait 2-3 minutes, then check:
 - **Monitoring → Discovery** - interfaces should be discovered
 - **Monitoring → Graphs** - traffic graphs should appear
 
+### ✅ Post-Import Verification Checklist
+
+1. **Run local static checks**
+   ```bash
+   ./tests/run_checks.sh
+   ```
+   - Ensures all XML templates are well-formed
+   - Confirms UUID uniqueness and macro syntax
+   - Safe to run before committing or opening a PR
+2. **Confirm macro overrides**
+   - `{$SNMP_COMMUNITY}` (SNMPv2c) or `{$SNMPV3_*}` (SNMPv3) must be set per host
+   - Adjust threshold macros (`{$CPU.UTIL.WARN}`, `{$MEM.UTIL.CRIT}`, etc.) to match your SLA
+3. **Inspect discovery output**
+   - Interfaces should appear under **Monitoring → Discovery** within 30 minutes
+   - Verify OSPF/BGP neighbors if those features are enabled on the router
+4. **Spot-check hardware metrics**
+   - Temperature, voltage, and uptime items should update at the polling interval
+   - Unexpected `Unsupported item` errors usually indicate SNMP filters or firewall blocks
+5. **Optional: live OID validation**
+   - Use [`tests/test_oids.sh`](tests/test_oids.sh) against a lab router before production
+   - Confirms RouterOS exposes all OIDs required by the templates
+
 ---
 
 ## 🔒 Security Best Practices
