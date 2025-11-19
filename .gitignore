@@ -71,6 +71,7 @@ private/
 # Zabbix exports with sensitive data
 *_export_with_credentials.xml
 *_backup_*.xml
+*_with_credentials.xml
 
 # Documentation builds
 docs/_build/
