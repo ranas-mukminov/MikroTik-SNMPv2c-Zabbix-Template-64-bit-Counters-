@@ -1,389 +1,591 @@
-# MikroTik SNMP Zabbix Templates (64-bit Counters)
+# 📡 MikroTik SNMP Zabbix Templates (64-bit Counters)
+
+[![Zabbix](https://img.shields.io/badge/Zabbix-7.2%2B-red?logo=zabbix)](https://www.zabbix.com/)
+[![RouterOS](https://img.shields.io/badge/RouterOS-6.x%20%7C%207.x-blue?logo=mikrotik)](https://mikrotik.com/)
+[![SNMP](https://img.shields.io/badge/SNMP-v2c%20%7C%20v3-green)](https://en.wikipedia.org/wiki/Simple_Network_Management_Protocol)
+[![License](https://img.shields.io/badge/License-Custom-orange)](LICENSE)
 
 Production-ready Zabbix templates for MikroTik RouterOS with 64-bit interface counters, supporting SNMPv2c and SNMPv3.
 
-English | [Русский](README.ru.md)
+**English** | [Русский](README.ru.md)
 
 ---
 
-## About the Maintainer
+## 🎯 Professional Deployment & Support
 
-**Ranas Mukminov** is a DevOps/SRE and network engineer specializing in:
+> **"Defense by design. Speed by default."**
 
-- Monitoring and observability: Zabbix, Prometheus, Grafana, Loki
-- Network monitoring: MikroTik, Cisco, Juniper, and other network equipment
-- Automation and orchestration: Ansible, Docker, Kubernetes
+Looking for enterprise-grade MikroTik monitoring deployment? Get **professional assistance** from experienced DevOps/SRE engineers specializing in network infrastructure monitoring.
 
-**Contacts:**
-- Website: [run-as-daemon.ru](https://run-as-daemon.ru)
-- GitHub: [ranas-mukminov](https://github.com/ranas-mukminov)
-- Telegram: [@run_as_daemon](https://t.me/run_as_daemon)
+### 🚀 Why Professional Services?
 
----
+- ⚡ **Rapid Deployment** - Production-ready in days, not weeks
+- 🎯 **Best Practices** - Battle-tested configurations from day one
+- 🔒 **Security First** - SNMPv3, network segmentation, compliance-ready
+- 📊 **Optimized Performance** - Fine-tuned for large-scale environments
+- 🛠️ **Ongoing Support** - 24/7 monitoring and incident response
 
-## What This Repository Is
+### 📞 Contact for Professional Services
 
-This repository provides Zabbix monitoring templates for MikroTik RouterOS devices with a focus on accurate traffic measurement using 64-bit interface counters. The templates support both SNMPv2c and SNMPv3 protocols and have been tested with modern Zabbix versions (7.x and 6.0 LTS).
-
-**Key features:**
-
-- 64-bit interface counters (ifHCInOctets/ifHCOutOctets) prevent counter wrapping on high-speed links
-- Automatic interface discovery with flexible filtering
-- System health monitoring: CPU, memory, temperature, voltage
-- Network metrics: traffic, errors, discards, broadcast/multicast packets
-- Routing protocol monitoring: OSPF neighbors, BGP peers
-- Configurable thresholds via macros
-- Comprehensive alerting with trigger hysteresis to reduce false positives
+- 🌐 Website: **[run-as-daemon.ru](https://run-as-daemon.ru)**
+- 💬 Telegram: **[@run_as_daemon](https://t.me/run_as_daemon)**
+- 📱 VK: Available via website
+- 💼 WhatsApp: Available via website
+- 🐙 GitHub: **[@ranas-mukminov](https://github.com/ranas-mukminov)**
 
 ---
 
-## Repository Structure
+## 📖 Table of Contents
+
+- [What This Repository Is](#-what-this-repository-is)
+- [Quick Start](#-quick-start)
+- [Key Features](#-key-features)
+- [Tech Stack](#-tech-stack)
+- [Repository Structure](#-repository-structure)
+- [Requirements](#-requirements)
+- [What is Monitored](#-what-is-monitored)
+- [SNMPv3 Configuration](#-snmpv3-recommended)
+- [Deployment Options](#-deployment-options)
+- [Troubleshooting](#-troubleshooting)
+- [Professional Services](#-professional-services)
+- [Support Options](#-support-options-comparison)
+- [Contributing](#-contributing)
+- [Author & Professional Services](#-author--professional-services)
+
+---
+
+## 📋 Quick Start
+
+Get up and running in 5 minutes! Follow these three simple steps:
+
+### 1️⃣ Enable SNMP on MikroTik
+
+```bash
+/snmp set enabled=yes contact="admin@example.com" location="DataCenter"
+/snmp community set [find default=yes] name="MySecureString" addresses=10.0.0.100/32
+/ip firewall filter add chain=input protocol=udp dst-port=161 src-address=10.0.0.100 action=accept
+```
+
+### 2️⃣ Import Template in Zabbix
+
+- Go to **Configuration → Templates → Import**
+- Select `template_mikrotik_snmpv2c_advanced_zbx72.xml`
+- Click **Import**
+
+### 3️⃣ Add Host in Zabbix
+
+- **Configuration → Hosts → Create host**
+- Link template: `Template MikroTik SNMPv2c Advanced (Production)`
+- Set macro `{$SNMP_COMMUNITY}` = `MySecureString`
+
+✅ **Done!** Data collection starts in ~2 minutes.
+
+📚 **Need more details?** See [QUICKSTART.md](QUICKSTART.md) or [DEPLOYMENT.md](DEPLOYMENT.md)
+
+---
+
+## 🎯 What This Repository Is
+
+This repository provides **enterprise-grade Zabbix monitoring templates** for MikroTik RouterOS devices with a focus on accurate traffic measurement using 64-bit interface counters. The templates support both SNMPv2c and SNMPv3 protocols and have been tested with modern Zabbix versions (7.x and 6.0 LTS).
+
+### Why 64-bit Counters?
+
+- ✅ **No Counter Wrapping** - 32-bit counters wrap at 4GB, causing data loss on high-speed links
+- ✅ **Accurate Measurements** - Essential for 1Gbps+ interfaces
+- ✅ **Production Ready** - Used in ISP and enterprise environments
+
+---
+
+## 🚀 Key Features
+
+- ✅ **64-bit Interface Counters** - ifHCInOctets/ifHCOutOctets prevent counter wrapping on high-speed links
+- ✅ **Automatic Interface Discovery** - Flexible filtering with customizable macros
+- ✅ **System Health Monitoring** - CPU, memory, temperature, voltage, disk usage
+- ✅ **Network Metrics** - Traffic, errors, discards, broadcast/multicast packets
+- ✅ **Routing Protocol Monitoring** - OSPF neighbors, BGP peer sessions
+- ✅ **Configurable Thresholds** - Easy customization via Zabbix macros
+- ✅ **Smart Alerting** - Trigger hysteresis to reduce false positives
+- ✅ **SNMPv2c & SNMPv3** - Support for both protocols (SNMPv3 recommended)
+- ✅ **Production Tested** - Deployed in enterprise and service provider networks
+
+---
+
+## 🏗️ Tech Stack
+
+### Monitoring Platform
+- **Zabbix** 7.2+ (compatible with 7.x and 6.0 LTS)
+- SNMP polling engine with 64-bit counter support
+- Low-level discovery for dynamic interface monitoring
+- Advanced trigger expressions with hysteresis
+
+### Network Equipment
+- **MikroTik RouterOS** 6.x / 7.x (7.x recommended)
+- SNMPv2c and SNMPv3 support
+- Standard IF-MIB (RFC 2863) compliance
+- MikroTik-specific OIDs for extended metrics
+
+### Protocols & Standards
+- **SNMPv2c** - Simple, widely supported (community-based)
+- **SNMPv3** - Secure with authentication and encryption
+- **IF-MIB** - Industry-standard interface metrics
+- **HC-RMON-MIB** - High-capacity 64-bit counters
+
+---
+
+## 📂 Repository Structure
 
 ```text
 .
-├── template_mikrotik_snmpv2c_advanced_zbx72.xml
-├── template_mikrotik_snmpv2c_zbx72_uuid32.xml
-├── template_mikrotik_snmpv3_advanced_zbx72.xml
-├── node-exporter-full-stack/
-├── examples/
-├── tests/
-├── CHANGELOG.md
-└── README.md / README.ru.md
+├── 📄 template_mikrotik_snmpv2c_advanced_zbx72.xml    # SNMPv2c Advanced (Recommended)
+├── 📄 template_mikrotik_snmpv2c_zbx72_uuid32.xml      # SNMPv2c Basic
+├── 📄 template_mikrotik_snmpv3_advanced_zbx72.xml     # SNMPv3 Secure
+├── 📁 node-exporter-full-stack/                       # Additional monitoring stack
+├── 📁 examples/                                        # Configuration examples
+├── 📁 tests/                                           # Validation tests
+├── 📝 README.md / README.ru.md                        # Documentation
+├── 📝 QUICKSTART.md                                   # 3-step quick start guide
+├── 📝 DEPLOYMENT.md                                   # Complete deployment guide
+├── 📝 SECURITY.md                                     # Security best practices
+├── 📝 CONTRIBUTING.md                                 # Contribution guidelines
+├── 📝 CODE_OF_CONDUCT.md                              # Community guidelines
+└── 📝 CHANGELOG.md                                    # Version history
 ```
 
-**Available templates:**
+### Available Templates
 
-| File                                         | Protocol | Zabbix | Notes                        |
-| -------------------------------------------- | -------- | ------ | ---------------------------- |
-| template_mikrotik_snmpv2c_advanced_zbx72.xml | SNMPv2c  | 7.2+   | Advanced template, 64-bit IF |
-| template_mikrotik_snmpv2c_zbx72_uuid32.xml   | SNMPv2c  | 7.2+   | Basic template, UUID-based   |
-| template_mikrotik_snmpv3_advanced_zbx72.xml  | SNMPv3   | 7.2+   | Advanced, secure SNMPv3      |
+| File | Protocol | Zabbix | Features |
+|------|----------|--------|----------|
+| `template_mikrotik_snmpv2c_advanced_zbx72.xml` | SNMPv2c | 7.2+ | ⭐ **Recommended** - Advanced, 64-bit IF, BGP, OSPF |
+| `template_mikrotik_snmpv2c_zbx72_uuid32.xml` | SNMPv2c | 7.2+ | Basic template, UUID-based |
+| `template_mikrotik_snmpv3_advanced_zbx72.xml` | SNMPv3 | 7.2+ | 🔒 **Secure** - Advanced, encrypted, production-grade |
 
 ---
 
-## Requirements
+## ✅ Requirements
 
-**Zabbix:**
-- Server 7.2+ (also works with 7.x and 6.0 LTS with small adjustments if needed)
+### Zabbix Server
+- **Version:** 7.2 or higher (also works with 7.x and 6.0 LTS)
+- **SNMP Support:** Enabled and configured
+- **Resources:** Adequate poller processes for device count
+- **Network:** Connectivity to MikroTik devices on UDP port 161
 
-**MikroTik RouterOS:**
-- Version 6.x or 7.x (7.x recommended for best feature support)
+### MikroTik RouterOS
+- **Version:** 6.x or 7.x (7.x recommended for best feature support)
+- **SNMP:** Service enabled with proper configuration
+- **Access:** Administrative permissions for configuration
+- **Interfaces:** Support for 64-bit counters (most modern devices)
 
-**SNMP:**
-- SNMPv2c for 64-bit counters
-- SNMPv3 support available via dedicated template
-
-**Network:**
-- Zabbix Server or Proxy must be able to reach MikroTik on UDP port 161
-
----
-
-## Quick Start
-
-### Enable SNMP on MikroTik (SNMPv2c)
-
-Connect to your MikroTik device and configure SNMP:
-
-```bash
-/snmp
-set enabled=yes contact="admin@example.com" location="DataCenter-A"
-
-/snmp community
-set [find default=yes] name="MySecureCommunity" addresses=10.0.0.100/32
-```
-
-Add a firewall rule to allow SNMP from your Zabbix server:
-
-```bash
-/ip firewall filter
-add chain=input protocol=udp dst-port=161 src-address=10.0.0.100 \
-    action=accept comment="Allow SNMP from Zabbix"
-```
-
-Test SNMP access from your Zabbix server:
-
-```bash
-snmpwalk -v2c -c MySecureCommunity <mikrotik-ip> system
-```
-
-### Import Template into Zabbix
-
-1. Log in to Zabbix web interface
-2. Navigate to **Configuration → Templates**
-3. Click **Import**
-4. Select the template file: `template_mikrotik_snmpv2c_advanced_zbx72.xml`
-5. Enable the following import options:
-   - Create new
-   - Update existing
-   - Delete missing (if updating an existing template)
-6. Click **Import**
-
-The template will appear as `Template MikroTik SNMPv2c Advanced (Production)` under **Templates/Network devices**.
-
-### Link Template to MikroTik Host
-
-1. Go to **Configuration → Hosts**
-2. Click **Create host** or select an existing host
-3. Configure host settings:
-   - **Host name:** `mikrotik-router-01`
-   - **Groups:** `Routers` (or create a new group)
-4. Add an SNMP interface:
-   - **Type:** SNMP
-   - **IP address:** Your MikroTik IP (e.g., `192.168.1.1`)
-   - **Port:** `161`
-   - **SNMP version:** SNMPv2
-   - **SNMP community:** `{$SNMP_COMMUNITY}` (leave as macro reference)
-5. Switch to the **Templates** tab
-6. Link the template: `Template MikroTik SNMPv2c Advanced (Production)`
-7. Switch to the **Macros** tab and select **Host macros**
-8. Override the SNMP community macro:
-   - **Macro:** `{$SNMP_COMMUNITY}`
-   - **Value:** `MySecureCommunity` (your actual community string)
-9. Click **Add** or **Update**
-
-Wait a few minutes for Zabbix to collect data, then verify in **Monitoring → Latest data** and check for any issues in **Monitoring → Problems**.
+### Network
+- **Connectivity:** Zabbix Server/Proxy → MikroTik UDP port 161
+- **Latency:** < 100ms recommended for reliable polling
+- **Security:** Firewall rules configured (see [SECURITY.md](SECURITY.md))
 
 ---
 
-## What is Monitored
+## 📊 What is Monitored
 
-The templates collect comprehensive metrics from MikroTik devices:
+### 🖥️ Device Health
 
-**Device health:**
-- System uptime
-- CPU utilization
-- Memory usage (total, used, free)
-- Disk usage
-- Hardware temperature (where available)
-- Power supply voltage
+- **System Uptime** - Device availability tracking
+- **CPU Utilization** - Processor load monitoring
+- **Memory Usage** - RAM utilization (total, used, free)
+- **Disk Usage** - Storage space monitoring
+- **Hardware Temperature** - Thermal monitoring (where available)
+- **Power Supply Voltage** - Power status monitoring
 
-**Network interfaces:**
-- RX/TX traffic (inbound/outbound bytes and packets)
-- Error counters (input/output errors)
-- Discard counters (input/output discards)
-- Interface operational and administrative status
-- Interface descriptions and aliases
-- Interface speed and duplex
-- Bandwidth utilization percentage
+### 🌐 Network Interfaces
 
-**Additional metrics** (depending on RouterOS version and template):
-- OSPF neighbor states
-- BGP peer sessions
-- ICMP ping response time and packet loss
+- **Traffic Metrics**
+  - RX/TX traffic (inbound/outbound bytes and packets)
+  - **64-bit counters** for high-capacity links
+  - Bits per second calculations
+  - Bandwidth utilization percentage
 
-The exact set of monitored items depends on your RouterOS version and the specific template you choose. You can inspect all items in Zabbix by viewing the template configuration.
+- **Error Counters**
+  - Input/output errors
+  - Input/output discards
+  - Collision detection
+  - Interface flaps
+
+- **Interface Status**
+  - Operational status (up/down)
+  - Administrative status
+  - Interface descriptions and aliases
+  - Speed and duplex mode
+
+- **Traffic Types**
+  - Broadcast packets
+  - Multicast packets
+  - Unicast packets
+
+### 🔀 Routing Protocols
+
+- **OSPF Monitoring** - Neighbor states and adjacencies
+- **BGP Monitoring** - Peer sessions and state tracking
+- **Route Counting** - Active routes in routing table
+
+### 🔌 Connectivity
+
+- **ICMP Ping** - Response time and packet loss monitoring
+- **Service Availability** - Device reachability alerts
+
+> 📝 **Note:** Exact metric availability depends on your RouterOS version and the specific template used. Inspect the template in Zabbix for full details.
 
 ---
 
-## SNMPv3 (Recommended)
+## 🔐 SNMPv3 (Recommended)
 
-For production environments, SNMPv3 with authentication and privacy is strongly recommended over SNMPv2c.
+For production environments, **SNMPv3 with authentication and privacy is strongly recommended** over SNMPv2c.
+
+### Why SNMPv3?
+
+- 🔒 **Encryption** - SNMP traffic is encrypted (AES/DES)
+- 🔑 **Authentication** - Prevents unauthorized access (SHA/MD5)
+- 🛡️ **Security** - No plaintext community strings
+- ✅ **Compliance** - Meets security standards (PCI-DSS, SOC2, etc.)
 
 ### Configure SNMPv3 on MikroTik
 
-Create an SNMPv3 user with authentication and privacy:
-
 ```bash
-/snmp community
-set [find default=yes] disabled=yes
+# Disable SNMPv2c community
+/snmp community set [find default=yes] disabled=yes
 
-/snmp
-set enabled=yes engine-id=<your-engine-id> contact="admin@example.com"
+# Configure SNMPv3
+/snmp set enabled=yes engine-id=<your-engine-id> contact="admin@example.com"
 
-/snmp user
-add name=zabbix_user group=read auth-protocol=SHA1 auth-password="AuthPass123!" \
-    encryption-protocol=AES encryption-password="PrivPass123!"
+# Create SNMPv3 user with strong security
+/snmp user add name=zabbix_user group=read \
+    auth-protocol=SHA256 auth-password="StrongAuthPass!2024" \
+    encryption-protocol=AES encryption-password="StrongPrivPass!2024"
 ```
 
 ### Configure SNMPv3 in Zabbix
 
 1. Import the SNMPv3 template: `template_mikrotik_snmpv3_advanced_zbx72.xml`
-2. When configuring the host interface, select:
+2. When configuring the host interface:
    - **SNMP version:** SNMPv3
-   - **Context name:** (leave empty)
    - **Security name:** `zabbix_user`
    - **Security level:** authPriv
-   - **Authentication protocol:** SHA
-   - **Authentication passphrase:** `AuthPass123!`
+   - **Authentication protocol:** SHA or SHA-256
+   - **Authentication passphrase:** `StrongAuthPass!2024`
    - **Privacy protocol:** AES
-   - **Privacy passphrase:** `PrivPass123!`
+   - **Privacy passphrase:** `StrongPrivPass!2024`
 3. Link the SNMPv3 template to the host
 
-SNMPv3 encrypts SNMP traffic and prevents unauthorized access to your devices.
+📚 **Full security guide:** [SECURITY.md](SECURITY.md)
 
 ---
 
-## Display & Value Mappings in Zabbix
+## 🚀 Deployment Options
 
-To properly display collected data, configure value mappings and display settings in Zabbix.
+### Option 1: Quick Deployment (5 minutes)
+
+Perfect for testing or small deployments (1-10 devices).
+
+✅ Manual configuration  
+✅ Web UI-based setup  
+✅ No automation required  
+
+📖 **Guide:** [QUICKSTART.md](QUICKSTART.md)
+
+---
+
+### Option 2: Standard Deployment (1-2 hours)
+
+Ideal for small to medium deployments (10-50 devices).
+
+✅ Standardized configuration  
+✅ Documentation and testing  
+✅ Basic automation with scripts  
+
+📖 **Guide:** [DEPLOYMENT.md](DEPLOYMENT.md)
+
+---
+
+### Option 3: Professional Deployment (1-3 days)
+
+Best for large-scale or mission-critical deployments (50+ devices).
+
+✅ Full automation with Ansible/API  
+✅ High availability setup  
+✅ Custom dashboards and reporting  
+✅ Security hardening (SNMPv3, network segmentation)  
+✅ Performance optimization  
+✅ Team training and documentation  
+
+📞 **Contact:** [run-as-daemon.ru](https://run-as-daemon.ru) for enterprise deployment
+
+---
+
+## 📝 Display & Value Mappings
+
+To properly display collected data, configure value mappings in Zabbix.
 
 ### Interface Status Value Mapping
 
 Create a value mapping for interface operational status:
 
 1. Go to **Administration → General → Value mapping**
-2. Click **Create value map**
-3. Name: `IfOperStatus`
-4. Add the following mappings:
+2. Click **Create value map**, Name: `IfOperStatus`
+3. Add mappings:
 
-   | Value | Mapped to        |
-   | ----- | ---------------- |
-   | 1     | up               |
-   | 2     | down             |
-   | 3     | testing          |
-   | 4     | unknown          |
-   | 5     | dormant          |
-   | 6     | notPresent       |
-   | 7     | lowerLayerDown   |
-
-5. Save the value mapping
-
-This mapping is used for items like `ifOperStatus[{#IFNAME}]` and `ifAdminStatus[{#IFNAME}]` to display interface states as readable text instead of numeric codes.
+| Value | Mapped to |
+|-------|-----------|
+| 1 | up |
+| 2 | down |
+| 3 | testing |
+| 4 | unknown |
+| 5 | dormant |
+| 6 | notPresent |
+| 7 | lowerLayerDown |
 
 ### Interface Speed Normalization
 
-To display interface speeds in human-readable units:
+Display interface speeds in human-readable units:
 
 1. Edit interface speed items in the template
-2. Add a preprocessing step:
-   - **Type:** Custom multiplier
-   - **Parameters:** `0.000001` (converts bps to Mbps)
+2. Add preprocessing: **Custom multiplier** → `0.000001` (bps to Mbps)
 3. Set **Units** to `Mbps`
-4. For bandwidth utilization items, use calculated items that reference macros:
-   - `{$IF_UTIL_WARN}` for warning threshold (e.g., 80%)
-   - `{$IF_UTIL_HIGH}` for high threshold (e.g., 90%)
-
-### MikroTik Interface Type Mapping
-
-Create a value mapping for MikroTik-specific interface types:
-
-1. Go to **Administration → General → Value mapping**
-2. Click **Create value map**
-3. Name: `MikroTik.Interface.Type`
-4. Add common mappings:
-
-   | Value | Mapped to |
-   | ----- | --------- |
-   | 6     | ether     |
-   | 24    | vlan      |
-   | 53    | pppoe     |
-   | 195   | lte       |
-
-5. Extend this list as needed for other interface types
-
-Apply this mapping to items like `mtIfType[{#IFNAME}]` if your template exposes interface type information.
 
 ### Traffic Graphs in Bits per Second
 
-To display traffic graphs in bits per second instead of bytes:
+Display traffic in bits/s instead of bytes:
 
-1. Keep raw SNMP items collecting data in bytes (no change)
-2. When creating or editing graphs:
-   - Select the traffic items (inbound/outbound bytes)
-   - Apply a **multiplier** of `8` to convert bytes to bits
-   - Set **Y axis units** to `bit/s`
-3. Alternatively, create calculated items that multiply byte counters by 8
-
-This approach maintains raw byte data for accuracy while displaying familiar bit/s units in graphs.
+1. Keep raw SNMP items in bytes
+2. When creating graphs, apply multiplier of `8` to convert bytes to bits
+3. Set **Y axis units** to `bit/s`
 
 ---
 
-## Troubleshooting
+## 🔧 Troubleshooting
 
 ### No data from host
 
-Check the following:
-- Verify SNMP is enabled on MikroTik: `/snmp print`
-- Test connectivity with snmpwalk from Zabbix server: `snmpwalk -v2c -c YourCommunity <mikrotik-ip> system`
-- Confirm community string or SNMPv3 credentials are correct in Zabbix
-- Check firewall rules on MikroTik and between Zabbix and MikroTik
-- Review Zabbix server logs for SNMP timeout or authentication errors
+**Check:**
+```bash
+snmpwalk -v2c -c YourCommunity <mikrotik-ip> system
+```
+
+**Common issues:**
+- ❌ SNMP not enabled → `/snmp set enabled=yes` on MikroTik
+- ❌ Wrong community → Verify `/snmp community print`
+- ❌ Firewall blocking → Check firewall rules
+- ❌ Network issue → Test with `ping`
 
 ### No interfaces discovered
 
-Possible causes:
-- LLD filters exclude the interfaces you want to monitor
-- Interfaces are administratively disabled
-- SNMPv2c and 64-bit counters are not available on the device
-
-Solutions:
-- Adjust `{$IF.LLD.FILTER.NOT_MATCHES}` macro to include desired interface types
-- Set `{$IF.LLD.FILTER.ADMIN_STATUS}` to match both up and down interfaces if needed
-- Manually trigger discovery: **Configuration → Hosts → [Host] → Discovery → Execute now**
-- Verify interface availability with snmpwalk for IF-MIB
+**Solutions:**
+- Adjust `{$IF.LLD.FILTER.NOT_MATCHES}` macro
+- Manually trigger: **Configuration → Hosts → Discovery → Execute now**
+- Verify interfaces: `/interface print` on MikroTik
 
 ### Traffic spikes or incorrect values
 
-Common causes:
-- Counter wrapping (32-bit counters on high-speed links)
-- Device reboot resets counters to zero
-- Polling interval is too long
-- Double polling from multiple Zabbix servers or proxies
+**Common causes:**
+- Counter wrapping (use 64-bit counters)
+- Device reboot (counters reset to zero)
+- Polling interval too long
+- Double polling from multiple servers
 
-Fixes:
-- Ensure the template uses 64-bit counters (ifHCInOctets/ifHCOutOctets)
-- Verify correct interface speed is detected
+**Fixes:**
+- Ensure template uses 64-bit counters (ifHC*)
+- Verify correct interface speed detection
 - Reduce polling interval for critical interfaces
-- Check that only one Zabbix server/proxy is monitoring the device
 
 ### SNMP timeouts
 
-Possible issues:
-- High CPU load on MikroTik device
-- Network latency or packet loss between Zabbix and MikroTik
-- Too many SNMP requests at once (check max OIDs per request)
-- Firewall or router limiting SNMP traffic
+**Solutions:**
+- Increase SNMP timeout in Zabbix (Configuration → Hosts → Interface)
+- Check MikroTik CPU: `/system resource print`
+- Reduce polling frequency
+- Use Zabbix proxies for distributed load
 
-Solutions:
-- Increase SNMP timeout in Zabbix host interface configuration
-- Reduce polling frequency or distribute load across multiple proxies
-- Check network path with ping and traceroute
-- Verify MikroTik CPU usage: `/system resource print`
-- Adjust bulk request settings in Zabbix if needed
+📚 **More troubleshooting:** [QUICKSTART.md](QUICKSTART.md#-quick-troubleshooting)
 
 ---
 
-## Roadmap
+## 💼 Professional Services
+
+### 🏗️ What We Offer
+
+#### Infrastructure & Monitoring
+- 📊 **Network Monitoring Setup** - Zabbix, Prometheus, Grafana deployment
+- 🔧 **MikroTik Configuration** - RouterOS optimization and hardening
+- 🌐 **High-Load Monitoring** - Scalable architectures for 100+ devices
+- 🏢 **Enterprise Solutions** - Multi-site, high-availability setups
+
+#### Security & Hardening
+- 🔒 **SNMPv3 Migration** - Secure authentication and encryption
+- 🛡️ **Network Hardening** - Firewall rules, access control, segmentation
+- 📋 **Compliance** - PCI-DSS, ISO 27001, SOC2 readiness
+- 🔐 **Security Audits** - Infrastructure and configuration review
+
+#### Automation & DevOps
+- 🤖 **Monitoring as Code** - Ansible, Terraform, API automation
+- 🔄 **CI/CD Integration** - Automated template deployment
+- 📦 **Infrastructure as Code** - Reproducible, version-controlled configs
+- ⚙️ **Custom Integrations** - External systems and workflows
+
+#### Training & Support
+- 🎓 **Team Training** - Zabbix, MikroTik, monitoring best practices
+- 📚 **Documentation** - Customized runbooks and procedures
+- 🛠️ **24/7 Support** - Incident response and troubleshooting
+- 💡 **Consulting** - Architecture design and optimization
+
+### 🎯 Professional Deployment Recommendations
+
+| Deployment Size | Recommended Approach | Timeline | Support Level |
+|-----------------|---------------------|----------|---------------|
+| 1-10 devices | Self-service with docs | 1-2 days | Community |
+| 10-50 devices | Standard deployment | 1 week | Email support |
+| 50-200 devices | Professional setup | 2-4 weeks | Dedicated support |
+| 200+ devices | Enterprise solution | 1-3 months | 24/7 support |
+
+---
+
+## 📊 Support Options Comparison
+
+| Feature | Community | Professional | Enterprise |
+|---------|-----------|--------------|------------|
+| **Documentation** | ✅ Public docs | ✅ + Custom docs | ✅ + Dedicated docs |
+| **Deployment** | ⚙️ Self-service | 🚀 Assisted | 🏢 Fully managed |
+| **Configuration** | 📖 Via docs | 🎯 Optimized | 💎 Custom tailored |
+| **Response Time** | 🕐 Community (best effort) | ⏱️ 24-48 hours | ⚡ 1-4 hours (24/7) |
+| **Security** | 🔓 Basic guidance | 🔒 SNMPv3 setup | 🛡️ Full hardening |
+| **Automation** | ❌ Not included | ✅ Basic scripts | ✅ Full IaC |
+| **Training** | ❌ Not included | ✅ 1-2 sessions | ✅ Comprehensive |
+| **Updates** | 📦 Self-apply | 🔄 Assisted | 🔄 Managed |
+| **Price** | Free | $$ Competitive | $$$ Enterprise |
+
+### 📞 Contact for Professional Services
+
+> **"Defense by design. Speed by default."**
+
+- 🌐 Website: **[run-as-daemon.ru](https://run-as-daemon.ru)**
+- 💬 Telegram: **[@run_as_daemon](https://t.me/run_as_daemon)**
+- 📱 VK: Available via website
+- 💼 WhatsApp: Available via website
+- 🐙 GitHub: **[@ranas-mukminov](https://github.com/ranas-mukminov)**
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! We appreciate bug reports, feature requests, and code contributions.
+
+### How to Contribute
+
+1. 🐛 **Report Bugs** - Open an issue with details
+2. 💡 **Suggest Features** - Propose improvements
+3. 🔧 **Submit PRs** - Fix bugs or add features
+4. 📚 **Improve Docs** - Clarify or translate
+
+### Contribution Guidelines
+
+- Read [CONTRIBUTING.md](CONTRIBUTING.md) before starting
+- Follow existing code style and conventions
+- Test your changes on real MikroTik devices
+- Update documentation and CHANGELOG.md
+- Do not change existing item keys without justification
+
+📖 **Full guidelines:** [CONTRIBUTING.md](CONTRIBUTING.md)
+
+---
+
+## 📜 Code of Conduct
+
+This project follows a Code of Conduct to ensure a welcoming and inclusive community.
+
+- ✅ Be respectful and professional
+- ✅ Provide constructive feedback
+- ✅ Accept differences in opinion
+- ❌ No harassment or discrimination
+
+📖 **Full code:** [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+
+---
+
+## 🗺️ Roadmap
 
 Planned improvements for future releases:
 
-- Detailed metric documentation per template in `docs/` directory
-- Example Grafana dashboards for MikroTik metrics (via Zabbix datasource)
-- Additional RouterOS device profiles (CCR, CRS, hAP series)
-- Continuous testing with new Zabbix and RouterOS releases
-- Extended monitoring for wireless interfaces and client statistics
-- QoS and queue monitoring templates
+- 📖 **Detailed Metric Documentation** - Per-template metric guides
+- 📊 **Grafana Dashboards** - Pre-built dashboards for Zabbix datasource
+- 🔧 **Device Profiles** - CCR, CRS, hAP series-specific templates
+- 🧪 **Automated Testing** - CI/CD for template validation
+- 📡 **Wireless Monitoring** - Client statistics and signal strength
+- ⚙️ **QoS & Queue Monitoring** - Traffic shaping metrics
 
 See [CHANGELOG.md](CHANGELOG.md) for version history and completed features.
 
 ---
 
-## Contributing
+## 👨‍💻 Author & Professional Services
 
-Contributions are welcome! To contribute to this project:
+### About the Maintainer
 
-1. Open an issue to discuss the change or feature
-2. Fork the repository
-3. Create a feature branch: `git checkout -b feature/my-improvement`
-4. Make your changes and test them on a real MikroTik device
-5. Commit with clear messages: `git commit -m "Add feature: description"`
-6. Push to your fork: `git push origin feature/my-improvement`
-7. Open a Pull Request
+**Ranas Mukminov** is a DevOps/SRE and network engineer with extensive experience in:
 
-**Guidelines for contributors:**
-- Do not change existing item keys without a strong reason (breaks existing deployments)
-- Document tested Zabbix and RouterOS versions in the PR description
-- Ensure XML templates are valid (use `xmllint` or run tests in `tests/`)
-- Follow the existing template structure and naming conventions
-- Update CHANGELOG.md with your changes
+- 📊 **Monitoring & Observability** - Zabbix, Prometheus, Grafana, Loki, ELK
+- 🌐 **Network Monitoring** - MikroTik, Cisco, Juniper, and other equipment
+- 🤖 **Automation & Orchestration** - Ansible, Docker, Kubernetes, Terraform
+- 🔒 **Security & Compliance** - Network hardening, secure architectures
+- 🏗️ **Infrastructure Engineering** - High-availability, scalable systems
+
+### Professional Experience
+
+- ✅ Deployed monitoring for 100+ MikroTik devices in production
+- ✅ ISP and enterprise network monitoring projects
+- ✅ Custom Zabbix template development and optimization
+- ✅ SNMPv3 migration and security hardening
+- ✅ Training and consulting for monitoring teams
+
+### Services & Expertise
+
+🏗️ **Infrastructure & Monitoring**  
+🔒 **Security & Network Hardening**  
+⚙️ **MikroTik Configuration & Optimization**  
+🌐 **Network Monitoring Setup** (Zabbix, Prometheus)  
+🤖 **Automation** (Ansible, monitoring-as-code)  
+📊 **High-Load Network Monitoring**  
+
+### Get in Touch
+
+> **"Defense by design. Speed by default."**
+
+- 🌐 Website: **[run-as-daemon.ru](https://run-as-daemon.ru)**
+- 💬 Telegram: **[@run_as_daemon](https://t.me/run_as_daemon)**
+- 📱 VK: Available via website
+- 💼 WhatsApp: Available via website
+- 🐙 GitHub: **[@ranas-mukminov](https://github.com/ranas-mukminov)**
 
 ---
 
-## License
+## 📄 License
 
 This project is shared for personal and lab use with attribution to the maintainer.
 
-For commercial use or deployment, contact the maintainer if you have questions.
+For commercial use or deployment in production, you are welcome to use these templates. If you need customization, professional support, or have questions, please contact the maintainer.
 
 **Maintainer:** Ranas Mukminov  
 **Website:** [run-as-daemon.ru](https://run-as-daemon.ru)
+
+---
+
+## 🙏 Acknowledgments
+
+- Thanks to the MikroTik and Zabbix communities for their support
+- Contributors who have reported issues and suggested improvements
+- Organizations using these templates in production
+
+---
+
+**⭐ If you find this project useful, please star it on GitHub!**
+
+**🔗 Links:**
+- [Quick Start Guide](QUICKSTART.md)
+- [Deployment Guide](DEPLOYMENT.md)
+- [Security Best Practices](SECURITY.md)
+- [Contributing Guidelines](CONTRIBUTING.md)
+- [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Changelog](CHANGELOG.md)
