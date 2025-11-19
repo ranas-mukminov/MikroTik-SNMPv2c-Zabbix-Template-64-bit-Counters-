@@ -1,0 +1,11 @@
+---
+- name: Harden pfSense edge
+  hosts: edge
+  roles:
+    - pfsense
+
+- name: Deploy office services
+  hosts: servers
+  roles:
+    - docker-host
+    - nas

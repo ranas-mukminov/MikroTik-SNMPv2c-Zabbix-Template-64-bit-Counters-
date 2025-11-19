@@ -1,0 +1,16 @@
+---
+- name: Configure homelab edge and services
+  hosts: edge
+  roles:
+    - openwrt
+
+- name: Configure Proxmox nodes
+  hosts: proxmox
+  roles:
+    - docker-host
+    - k3s-node
+
+- name: Configure NAS appliances
+  hosts: nas
+  roles:
+    - nas

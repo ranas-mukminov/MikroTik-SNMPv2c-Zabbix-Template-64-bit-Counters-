@@ -1,0 +1,4 @@
+---
+- name: placeholder task for pfsense role
+  ansible.builtin.debug:
+    msg: "pfsense role needs implementation for target environment"

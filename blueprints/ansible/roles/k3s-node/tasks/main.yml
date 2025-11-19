@@ -1,0 +1,4 @@
+---
+- name: placeholder task for k3s-node role
+  ansible.builtin.debug:
+    msg: "k3s-node role needs implementation for target environment"

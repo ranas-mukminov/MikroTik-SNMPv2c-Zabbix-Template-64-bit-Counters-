@@ -1,0 +1,4 @@
+---
+- name: placeholder task for openwrt role
+  ansible.builtin.debug:
+    msg: "openwrt role needs implementation for target environment"
