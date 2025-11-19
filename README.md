@@ -1,141 +1,512 @@
-# Homelab / SMB Infra-as-Code Blueprints & Cost Optimizer
+# MikroTik SNMP Zabbix Templates (64-bit Counters)
 
-[![License](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/Python-3.10%2B-green.svg)](https://www.python.org/)
-[![CI](https://github.com/ranas-mukminov/homelab-cost-optimizer/actions/workflows/ci.yml/badge.svg)](.github/workflows/ci.yml)
+Production-ready Zabbix templates for MikroTik RouterOS devices with 64-bit interface counters, SNMPv2c and SNMPv3 support.
 
-> Opinionated IaC blueprints for homelabs and small businesses, plus an AI-assisted cost optimizer for your VMs and containers.
+**English** | [Русский](README.ru.md)
 
 ---
 
-## English
+## 👤 About the Maintainer
 
-Homelabs and small offices often grow organically, mixing Proxmox clusters, pfSense firewalls, NAS boxes, and a handful of Docker or Kubernetes workloads. The result is rarely documented, hardly reproducible, and notoriously expensive to power. This repository combines two complementary toolsets to bring order and visibility:
+**Ranas Mukminov**  
+DevOps / SRE / Network Engineer
 
-1. **`homelab-blueprints-run-as-daemon`** – A curated catalog of Infra-as-Code blueprints that stitch together Terraform, Ansible, and k3d/k3s manifests for common homelab and SMB topologies.
-2. **`homelab-cost-optimizer`** – A Python toolkit and CLI that collects utilization data from hypervisors and container runtimes, estimates power consumption, and proposes consolidation scenarios, optionally enriched by AI-generated reports.
+- 🌐 Website: [run-as-daemon.ru](https://run-as-daemon.ru)
+- 💼 GitHub: [@ranas-mukminov](https://github.com/ranas-mukminov)
+- 💬 Telegram: [Contact via website](https://run-as-daemon.ru)
 
-### Motivation
+---
 
-* Homelabs tend to evolve faster than they are documented; rebuilds take weeks.
-* Power prices and hardware footprints keep increasing, but capacity planning remains ad-hoc.
-* Blog posts usually showcase a single bespoke setup rather than reusable, parameterized catalogs.
-* SMBs require production-ready defaults with repeatable automation, not copy-pasted bash snippets.
+## 📖 What is this Repository?
 
-### What this repository provides
+This repository provides **enterprise-grade Zabbix templates** for monitoring MikroTik RouterOS devices via SNMP. The templates focus on accurate network interface monitoring using **64-bit counters** (ifHC*) to prevent counter wraps on high-speed interfaces.
 
-| Area | Highlights |
-| ---- | ---------- |
-| **IaC blueprints** | Proxmox + OpenWrt/pfSense + NAS topology, K3s/K3d clusters with CI/CD + observability, “Home Office” VPN + storage + backup stack, and a “Micro-SaaS” production starter kit with reverse proxy, TLS, app runtime, database, and backups. |
-| **Cost optimizer** | Collectors for Proxmox, libvirt, Docker, and Kubernetes; power estimations using per-node TDP hints + electricity configs; heuristic consolidation plans; Markdown and AI-generated narrative reports. |
+Key features:
+- **64-bit interface counters** (ifHCInOctets, ifHCOutOctets) for accurate traffic measurement on 1G+ links
+- **SNMPv2c and SNMPv3** template variants for different security requirements
+- **Comprehensive monitoring**: system health (CPU, memory, temperature), interface metrics (traffic, errors, discards, status), and hardware inventory
+- **Compatible with Zabbix 7.x and 6.0 LTS** with minimal adjustments
+- **RouterOS 6.x and 7.x support** with MikroTik-specific OIDs
 
-### Architecture overview
+---
+
+## 📁 Repository Structure
 
 ```
-Terraform -> hypervisors, storage, networks
-        \-> modules for Proxmox, K3s, Micro-SaaS
-
-Ansible  -> OS hardening, services (OpenWrt, pfSense, NAS, k3s nodes)
-
-k3d/k3s -> optional lightweight clusters for CI/CD & observability
-
-Collectors -> Nodes & workloads
-Estimators -> Power & cost figures
-Consolidator -> Proposed placements
-Reporters -> Text / Markdown / AI narratives
+MikroTik-SNMPv2c-Zabbix-Template-64-bit-Counters-/
+├── template_mikrotik_snmpv2c_advanced_zbx72.xml    # Main SNMPv2c template (advanced)
+├── template_mikrotik_snmpv2c_zbx72_uuid32.xml      # SNMPv2c template (UUID32 variant)
+├── template_mikrotik_snmpv3_advanced_zbx72.xml     # SNMPv3 template (recommended)
+├── examples/
+│   ├── mikrotik_snmp_config.rsc                    # RouterOS SNMP configuration script
+│   ├── zabbix_host_config_example.md               # Zabbix host setup guide
+│   └── README.md                                    # Examples documentation
+├── tests/                                           # Template validation tests
+├── node-exporter-full-stack/                       # Optional Prometheus integration
+├── CHANGELOG.md                                     # Version history
+├── README.md                                        # This file
+└── README.ru.md                                     # Russian documentation
 ```
 
-Terraform codifies the base infrastructure (hypervisors, VLANs, storage pools). Ansible turns freshly provisioned nodes into firewalls, NAS appliances, or Kubernetes workers. Optional k3d clusters provide local sandboxes. The optimizer ingests runtime telemetry, feeds it into estimators, and generates actionable recommendations.
+### Available Templates
 
-### Quick start
+| File | Protocol | Zabbix Version | Description |
+|------|----------|----------------|-------------|
+| `template_mikrotik_snmpv2c_advanced_zbx72.xml` | SNMPv2c | 7.2+ | Full-featured template with system health, interface monitoring, hardware sensors |
+| `template_mikrotik_snmpv2c_zbx72_uuid32.xml` | SNMPv2c | 7.2+ | Simplified template with UUID32 compatibility |
+| `template_mikrotik_snmpv3_advanced_zbx72.xml` | SNMPv3 | 7.2+ | Secure template with authentication and encryption (recommended for production) |
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/ranas-mukminov/homelab-cost-optimizer.git
-   cd homelab-cost-optimizer
-   ```
-2. **Pick a blueprint** from `blueprints/terraform` and the matching Ansible playbook.
-3. **Set variables** (domains, VLANs, power pricing) inside the blueprint `variables.tf` and `ansible/group_vars`.
-4. **Provision with Terraform** and **configure with Ansible**.
-5. **Install the optimizer**
-   ```bash
-   pip install -e optimizer/
-   homelab-cost-optimizer --help
-   ```
-6. **Copy configs**
-   ```bash
-   cp config/electricity.example.yaml config/electricity.yaml
-   cp config/optimizer.example.yaml config/optimizer.yaml
-   ```
-   Adjust the kWh price, node power profiles, and credentials.
-7. **Collect and analyze**
-   ```bash
-   homelab-cost-optimizer collect --source proxmox --url https://pve.local --token $PVE_TOKEN --out data.json
-   homelab-cost-optimizer analyze --inventory data.json --electricity config/electricity.yaml --out report.md
-   homelab-cost-optimizer suggest --inventory data.json --scenario consolidate-low-util --out consolidate.md
-   ```
+---
 
-### Blueprints catalog
+## ⚙️ Requirements
 
-* **`proxmox-homelab`** – Two or three Proxmox nodes, pfSense/OpenWrt edge, NAS VM/LXC, and a management jump host. Emphasizes VLAN separation, storage pools, and backup scheduling hooks.
-* **`k3s-ci-monitoring`** – A lightweight K3s or k3d deployment wired with Git service + CI runners, ArgoCD, and Prometheus/Grafana monitoring. Includes ingress, TLS defaults, and optional longhorn storage references.
-* **`micro-saas`** – Reverse proxy (Traefik), app container group, PostgreSQL with PITR backups, object storage sync placeholders, and a backup runner. Designed as a starter kit for hobby SaaS or SMB portals.
+### Zabbix Server
+- **Zabbix 7.2+** (recommended)
+- **Zabbix 6.0 LTS** (compatible with minor template adjustments)
 
-Variables are centralized, networks are explicit, and every Terraform module is designed as a transparent starting point—not an opaque black box.
+### MikroTik RouterOS
+- **RouterOS 7.x** (recommended)
+- **RouterOS 6.x** (supported, but 7.x recommended for better SNMP stability)
 
-### Cost optimizer
+### SNMP Configuration
+- **SNMPv2c**: Simple community-based authentication (suitable for isolated networks)
+- **SNMPv3**: Authentication (SHA/MD5) + encryption (AES/DES) - **recommended for production**
+- SNMP configuration is done on the MikroTik device (host-side), templates remain the same
 
-The optimizer’s data model tracks nodes, workloads, and power profiles. Collectors normalize information from Proxmox, libvirt, Docker, and Kubernetes. Power estimation combines idle wattage plus utilization-driven deltas. Cost estimation multiplies the energy profile by configurable tariffs. The heuristic consolidator tries to pack underutilized workloads while respecting CPU/RAM limits, producing “what-if” savings along with Markdown tables or AI-generated narratives.
+### Network Requirements
+- UDP port **161** must be reachable from Zabbix server/proxy to MikroTik device
+- Firewall rules on MikroTik should allow SNMP only from trusted Zabbix server IP
 
-CLI examples:
+---
+
+## 🚀 Quick Start
+
+### Step 1: Enable SNMP on MikroTik
+
+#### SNMPv2c Configuration (Basic)
+
+Connect to your MikroTik via terminal and run:
+
+```routeros
+# Enable SNMP service
+/snmp set enabled=yes contact="admin@example.com" location="DataCenter-1"
+
+# Configure SNMP community with IP restriction
+# SECURITY: Change "MySecureString123!" to a strong random string
+# SECURITY: Change "10.0.0.100" to your Zabbix server IP
+/snmp community
+set [find default=yes] name="MySecureString123!" addresses=10.0.0.100/32 read-access=yes write-access=no
+
+# Add firewall rule to restrict SNMP access
+/ip firewall filter
+add chain=input protocol=udp dst-port=161 src-address=10.0.0.100/32 action=accept comment="Allow SNMP from Zabbix"
+add chain=input protocol=udp dst-port=161 action=drop comment="Drop all other SNMP"
+```
+
+**For complete configuration scripts**, see [`examples/mikrotik_snmp_config.rsc`](examples/mikrotik_snmp_config.rsc).
+
+### Step 2: Import Template into Zabbix
+
+1. Open Zabbix web interface
+2. Navigate to **Configuration** → **Templates**
+3. Click **Import** button
+4. Choose the XML template file (e.g., `template_mikrotik_snmpv2c_advanced_zbx72.xml`)
+5. Review import options and click **Import**
+6. Confirm the template appears in the templates list
+
+### Step 3: Link Template to MikroTik Host
+
+1. Go to **Configuration** → **Hosts**
+2. Create a new host or edit existing MikroTik host
+3. Configure host parameters:
+   - **Host name**: `mikrotik-router-01` (or your device name)
+   - **Groups**: Create/select `MikroTik Routers` group
+   - **Interfaces**: Add **SNMP** interface
+     - **IP address**: Your MikroTik management IP
+     - **Port**: 161
+     - **SNMP version**: SNMPv2
+     - **SNMP community**: `{$SNMP_COMMUNITY}` (or enter your community string)
+4. Go to **Templates** tab
+5. Click **Select** and choose the imported template
+6. Click **Add** and then **Update**
+
+### Step 4: Verify Data Collection
+
+1. Wait 2-3 minutes for initial data collection
+2. Navigate to **Monitoring** → **Latest data**
+3. Filter by your MikroTik host
+4. Check for interface traffic, system uptime, CPU, and memory metrics
+5. Go to **Monitoring** → **Problems** to verify triggers are working
+
+**Detailed configuration guide**: [`examples/zabbix_host_config_example.md`](examples/zabbix_host_config_example.md)
+
+---
+
+## 📊 What is Monitored
+
+### System Health
+- **Uptime**: Device uptime tracking with reboot detection
+- **CPU**: Processor utilization percentage (warning at 70%, critical at 90%)
+- **Memory**: Total, used, free memory with utilization percentage
+- **Disk**: Storage usage (where applicable)
+- **Temperature**: System temperature sensor (MikroTik-specific OID)
+- **Voltage**: System voltage monitoring (MikroTik-specific OID)
+
+### Network Interfaces (64-bit Counters)
+- **Traffic**: Inbound/outbound octets (bytes) using ifHCInOctets/ifHCOutOctets
+- **Bandwidth Utilization**: Calculated percentage of interface capacity
+- **Interface Speed**: Configured speed (ifHighSpeed) for capacity planning
+- **Operational Status**: up/down/testing/unknown/dormant/notPresent/lowerLayerDown
+- **Administrative Status**: Configured admin state
+- **Errors**: Inbound/outbound errors per interface
+- **Discards**: Dropped packets due to buffer overflows
+- **Broadcast/Multicast**: Storm detection with configurable thresholds
+
+### Hardware Inventory
+- **RouterOS Version**: Operating system version (auto-discovered)
+- **Device Serial Number**: Hardware serial (MikroTik-specific OID)
+- **System Name**: Configured hostname (sysName)
+- **System Location**: Physical location (sysLocation)
+- **System Contact**: Contact information (sysContact)
+
+### Low-Level Discovery
+- **Interface Discovery**: Automatic discovery of all network interfaces
+- **Interface Filtering**: Exclude loopback, disabled, or specific interfaces via regex macros
+
+---
+
+## 🔐 SNMPv3 Configuration Example
+
+SNMPv3 provides authentication and encryption, making it **recommended for production environments**.
+
+### MikroTik Configuration
+
+```routeros
+# Enable SNMP service
+/snmp set enabled=yes contact="admin@example.com" location="DataCenter-1" trap-version=3
+
+# Create SNMPv3 user with authentication and encryption
+# SECURITY: Change passwords to strong random strings (minimum 8 characters)
+# SECURITY: Change "10.0.0.100" to your Zabbix server IP
+/snmp community
+add name=zabbix_monitor \
+    authentication-protocol=SHA1 \
+    encryption-protocol=AES \
+    authentication-password="Your_Auth_Password_Min8Chars!" \
+    encryption-password="Your_Priv_Password_Min8Chars!" \
+    addresses=10.0.0.100/32 \
+    read-access=yes \
+    write-access=no
+
+# Add firewall rule to restrict SNMP access
+/ip firewall filter
+add chain=input protocol=udp dst-port=161 src-address=10.0.0.100/32 action=accept comment="Allow SNMP from Zabbix"
+add chain=input protocol=udp dst-port=161 action=drop comment="Drop all other SNMP"
+```
+
+### Zabbix Host Configuration
+
+When creating the host in Zabbix:
+
+1. **SNMP Interface Settings**:
+   - **SNMP version**: SNMPv3
+   - **Context name**: (leave empty)
+   - **Security name**: `zabbix_monitor`
+   - **Security level**: authPriv
+
+2. **Authentication Settings**:
+   - **Authentication protocol**: SHA
+   - **Authentication passphrase**: `Your_Auth_Password_Min8Chars!`
+
+3. **Privacy Settings**:
+   - **Privacy protocol**: AES
+   - **Privacy passphrase**: `Your_Priv_Password_Min8Chars!`
+
+### Testing SNMPv3 from Zabbix Server
 
 ```bash
-homelab-cost-optimizer collect --source docker --socket /var/run/docker.sock --out docker.json
-homelab-cost-optimizer analyze --inventory docker.json --electricity config/electricity.yaml --out docker-report.md
-homelab-cost-optimizer suggest --inventory docker.json --scenario rightsize --ai-report
+# Test SNMPv3 connection
+snmpwalk -v3 -l authPriv \
+  -u zabbix_monitor \
+  -a SHA -A "Your_Auth_Password_Min8Chars!" \
+  -x AES -X "Your_Priv_Password_Min8Chars!" \
+  <mikrotik-ip> system
+
+# Test specific OID (system uptime)
+snmpget -v3 -l authPriv \
+  -u zabbix_monitor \
+  -a SHA -A "Your_Auth_Password_Min8Chars!" \
+  -x AES -X "Your_Priv_Password_Min8Chars!" \
+  <mikrotik-ip> SNMPv2-MIB::sysUpTime.0
 ```
-
-### AI integration
-
-* `blueprints/ai/blueprint_ai_adapter.py` accepts a hardware inventory + desired topology and asks a configured AI provider to suggest node roles, resource allocations, and Markdown explanations. Deterministic defaults exist; AI is optional.
-* `optimizer/homelab_cost_optimizer/reporters/ai_reporter.py` converts raw numbers into human-friendly narratives, listing prioritized recommendations and comparing “before vs after” consolidation outcomes.
-* Providers live in `ai_providers/` with a simple abstract base, an OpenAI example (requires `OPENAI_API_KEY`), and a deterministic mock provider for offline/tests.
-
-### Testing and quality
-
-* `pytest` – unit and integration coverage.
-* `scripts/lint.sh` – Ruff, Black, YAML linting, and Terraform/Ansible formatting checks (auto-skipped if tooling is missing).
-* `scripts/security_scan.sh` – `pip-audit` + `bandit` for dependency and code scanning.
-* `scripts/perf_check.sh` – synthetic workload to ensure estimations stay performant.
-
-### Legal and responsible use
-
-* Operate strictly on infrastructure you own or manage with explicit authorization.
-* Respect the API terms for Proxmox, libvirt, Docker, Kubernetes, and any cloud providers.
-* Power and cost outputs are estimates for planning purposes, not financial advice or billing statements.
-* Nothing in this repository bypasses licensing or security controls; stay compliant.
-
-### Professional services – run-as-daemon.ru
-
-> **Professional services by [run-as-daemon.ru](https://run-as-daemon.ru)**
->
-> Maintained by a DevSecOps / SRE / FinOps engineer offering consulting for:
-> * Blueprinting and automating homelab or SMB infrastructure.
-> * Building resilient K3s/Kubernetes clusters with CI/CD and observability.
-> * Optimizing infrastructure and power costs with tailored FinOps engagements.
->
-> Reach out via the website for consulting, implementation, and ongoing support retainers.
-
-### Contributing
-
-Contributions are welcome! Please read `CONTRIBUTING.md`, open an issue describing your blueprint or feature idea, run `scripts/lint.sh` and `pytest`, and include documentation updates. We encourage blueprint submissions, cost-estimation improvements, and adapters for additional AI providers.
-
-### License
-
-Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE).
 
 ---
 
-## Русский (кратко)
+## 🔧 Display & Value Mappings in Zabbix
 
-Репозиторий объединяет два инструмента: каталог IaC-блупринтов для домашнего/SMB-инфраструктуры и оптимизатор затрат, который собирает данные из Proxmox, libvirt, Docker и Kubernetes, оценивает энергопотребление и предлагает сценарии консолидации. Terraform + Ansible + k3d шаблоны помогают быстро поднять Proxmox + OpenWrt/pfSense + NAS, K3s кластер с CI/CD и мониторингом, домашний офис со VPN и бэкапами, а также минимальный micro-SaaS стек. CLI оптимизатора строит отчёты в Markdown или через AI и использует конфиги `config/*.yaml`. Используйте только на инфраструктуре, где у вас есть права доступа, соблюдайте условия API и помните, что расчёты энергопотребления являются приблизительными. За профессиональные услуги и поддержку обращайтесь на [run-as-daemon.ru](https://run-as-daemon.ru).
+Proper value mappings and preprocessing make metrics human-readable and actionable.
+
+### Interface Operational Status Mapping
+
+Create a value mapping for interface status:
+
+**Value Map Name**: `IfOperStatus`
+
+| Value | Mapped to |
+|-------|-----------|
+| 1 | up |
+| 2 | down |
+| 3 | testing |
+| 4 | unknown |
+| 5 | dormant |
+| 6 | notPresent |
+| 7 | lowerLayerDown |
+
+**How to apply**:
+1. Go to **Configuration** → **Templates** → Your template
+2. Find item `ifOperStatus[{#IFNAME}]`
+3. In item settings, set **Show value**: `IfOperStatus`
+4. This also applies to `ifAdminStatus[{#IFNAME}]`
+
+### Human-Readable Interface Speed
+
+Convert interface speed from bps to Mbps:
+
+**Item**: `ifHighSpeed[{#IFNAME}]`
+- **Preprocessing**: Custom multiplier → `0.000001` (converts bps to Mbps)
+- **Units**: `Mbps`
+- **Value type**: Numeric (float)
+
+Result: Interface speed displays as "1000 Mbps" instead of "1000000000"
+
+### MikroTik Interface Type Mapping
+
+Create a value mapping for MikroTik-specific interface types:
+
+**Value Map Name**: `MikroTik.Interface.Type`
+
+| Value | Mapped to |
+|-------|-----------|
+| 6 | ethernetCsmacd |
+| 24 | softwareLoopback |
+| 53 | propVirtual |
+| 131 | tunnel |
+| 135 | l2vlan |
+| 136 | l3ipvlan |
+| 244 | pppoe |
+
+**Apply to item**: `ifType[{#IFNAME}]`
+
+### Bandwidth Utilization Triggers
+
+Use macros to define thresholds for interface utilization:
+
+**Recommended Macros**:
+- `{$IF_UTIL_WARN}` = `70` (Warning at 70% utilization)
+- `{$IF_UTIL_HIGH}` = `90` (Critical at 90% utilization)
+- `{$IF_ERROR_RATE_WARN}` = `1` (Warning on errors/discards per second)
+
+**Example Trigger Expression** (Inbound utilization warning):
+```
+avg(/Template/ifHCInOctets[{#IFNAME}],5m) / ifHighSpeed[{#IFNAME}] * 8 * 100 > {$IF_UTIL_WARN}
+```
+
+**Example Trigger Expression** (Error rate warning):
+```
+rate(/Template/ifInErrors[{#IFNAME}],5m) > {$IF_ERROR_RATE_WARN}
+```
+
+### Preprocessing Pipeline Example
+
+**Item**: Interface inbound traffic (bps)
+
+1. **Change per second**: Convert cumulative counter to rate
+2. **Custom multiplier**: `8` (convert bytes to bits)
+3. **Units**: `bps`
+
+**Item**: Percentage calculations
+
+1. **Calculated item formula**: `(last(//ifHCInOctets[{#IFNAME}]) / last(//ifHighSpeed[{#IFNAME}])) * 100`
+2. **Units**: `%`
+
+### Host Macros for Customization
+
+Define macros at host level to customize thresholds per device:
+
+| Macro | Default | Description |
+|-------|---------|-------------|
+| `{$SNMP_COMMUNITY}` | `CHANGE_ME_SNMPV2C` | SNMPv2c community string |
+| `{$CPU_UTIL_WARN}` | `70` | CPU utilization warning threshold (%) |
+| `{$CPU_UTIL_CRIT}` | `90` | CPU utilization critical threshold (%) |
+| `{$MEM_UTIL_WARN}` | `80` | Memory utilization warning threshold (%) |
+| `{$MEM_UTIL_CRIT}` | `95` | Memory utilization critical threshold (%) |
+| `{$TEMP_WARN}` | `60` | Temperature warning threshold (°C) |
+| `{$TEMP_CRIT}` | `75` | Temperature critical threshold (°C) |
+| `{$IF_UTIL_WARN}` | `70` | Interface utilization warning (%) |
+| `{$IF_UTIL_HIGH}` | `90` | Interface utilization critical (%) |
+| `{$IF_ERROR_RATE_WARN}` | `1` | Interface error rate warning (errors/sec) |
+| `{$IFCONTROL}` | `1` | Interface discovery filter (1=enabled) |
+
+**Override at host level**: Configuration → Hosts → Your host → Macros tab
+
+---
+
+## 🛠️ Troubleshooting
+
+### No Data from Host
+
+**Symptoms**: Items show "No data" or "Not supported"
+
+**Solutions**:
+1. **Test SNMP connectivity** from Zabbix server:
+   ```bash
+   snmpwalk -v2c -c YourCommunity <mikrotik-ip> system
+   ```
+2. **Check firewall rules** on MikroTik:
+   ```routeros
+   /ip firewall filter print where dst-port=161
+   ```
+3. **Verify SNMP is enabled** on MikroTik:
+   ```routeros
+   /snmp print
+   ```
+4. **Check SNMP community/credentials** match between MikroTik and Zabbix host settings
+
+### Interfaces Not Discovered
+
+**Symptoms**: Low-Level Discovery finds no interfaces or missing expected interfaces
+
+**Solutions**:
+1. **Check LLD rules**: Configuration → Templates → Discovery rules → Interface discovery
+2. **Review interface filters**: Check macros like `{$IFCONTROL}`, `{$NET.IF.IFNAME.MATCHES}`, `{$NET.IF.IFNAME.NOT_MATCHES}`
+3. **Verify SNMP version**: Ensure host SNMP version matches template expectations
+4. **Test interface OID manually**:
+   ```bash
+   snmpwalk -v2c -c YourCommunity <mikrotik-ip> ifDescr
+   ```
+5. **Check RouterOS version**: Some older versions have limited SNMP support
+
+### Traffic Spikes or Weird Values
+
+**Symptoms**: Unrealistic traffic graphs, sudden spikes, or negative values
+
+**Solutions**:
+1. **Ensure 64-bit counters are used**: Templates use `ifHCInOctets`/`ifHCOutOctets` (64-bit) instead of `ifInOctets`/`ifOutOctets` (32-bit)
+2. **Check for counter wraps**: 32-bit counters wrap at ~4GB on high-speed links
+3. **Verify no overlapping templates**: Multiple templates collecting same metrics can cause conflicts
+4. **Review preprocessing**: Ensure "Change per second" is applied to cumulative counters
+5. **Check RouterOS SNMP agent**: Update to latest stable RouterOS if issues persist
+
+### SNMP Timeouts
+
+**Symptoms**: Frequent "SNMP timeout" errors in Zabbix
+
+**Solutions**:
+1. **Increase SNMP timeout**: Host → Interfaces → SNMP → Timeout (default 3s, try 5-10s)
+2. **Check network latency**: High latency or packet loss affects SNMP response time
+3. **Reduce polling frequency**: Adjust item intervals if device is under heavy load
+4. **MikroTik CPU load**: High CPU usage on MikroTik can delay SNMP responses
+
+### High CPU Usage on MikroTik
+
+**Symptoms**: SNMP queries cause CPU spikes on MikroTik
+
+**Solutions**:
+1. **Increase item update intervals**: Change from 1m to 2m or 5m for less critical metrics
+2. **Disable unneeded discovery rules**: Comment out unnecessary LLD rules
+3. **Use SNMPv2c instead of v3** (if security permits): v3 encryption adds CPU overhead
+4. **Update RouterOS**: Newer versions have improved SNMP performance
+
+---
+
+## 🗺️ Roadmap
+
+### Planned Features
+- [ ] Detailed metric documentation per template item
+- [ ] Example Grafana dashboards for MikroTik visualization
+- [ ] Extended SNMPv3 examples (different auth/priv combinations)
+- [ ] RouterOS 8.x compatibility testing (when released)
+- [ ] Multi-vendor SNMP template collection
+- [ ] Zabbix 7.4+ LTS template optimization
+- [ ] Integration with MikroTik API as alternative to SNMP
+- [ ] Automated template validation CI/CD pipeline
+
+### Under Consideration
+- SNMP trap receiver configuration examples
+- Wireless interface monitoring templates
+- BGP/OSPF routing protocol monitoring
+- Queue and QoS monitoring templates
+- PPPoE server monitoring
+- CAPsMAN wireless controller templates
+
+**Suggestions welcome!** Open an issue to discuss new features or improvements.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome and appreciated! Here's how you can help:
+
+### How to Contribute
+
+1. **Fork the repository**
+2. **Create a feature branch**: `git checkout -b feature/your-feature-name`
+3. **Make your changes**:
+   - Update templates (XML files)
+   - Add/improve documentation
+   - Fix bugs or issues
+4. **Test your changes**:
+   - Import templates into test Zabbix instance
+   - Verify monitoring works on test MikroTik device
+   - Document tested versions (Zabbix X.Y, RouterOS Z.W)
+5. **Commit with clear messages**: `git commit -m "Add: SNMPv3 example for RouterOS 7.x"`
+6. **Push to your fork**: `git push origin feature/your-feature-name`
+7. **Open a Pull Request**: Describe your changes and testing environment
+
+### Contribution Guidelines
+
+- **Describe tested environment** in PR: Zabbix version, RouterOS version, device model
+- **Follow existing template structure**: Keep naming conventions consistent
+- **Update documentation**: If adding features, update README.md and README.ru.md
+- **Security first**: Never commit real credentials or IP addresses
+- **Keep it simple**: Prefer clarity over cleverness
+
+### What to Contribute
+
+- New template variants (different Zabbix versions, specialized use cases)
+- Bug fixes for template items or triggers
+- Documentation improvements (typos, clarity, translations)
+- Example configurations and use cases
+- Troubleshooting tips from real-world experience
+
+---
+
+## 📄 License
+
+This project is provided for **personal and commercial use** without restriction.
+
+**Conditions**:
+- Use at your own risk; no warranties provided
+- Attribution appreciated but not required
+- Feel free to modify and distribute
+- Not responsible for any issues arising from template usage
+
+**Best Practices**:
+- Always test templates in non-production environment first
+- Backup your Zabbix configuration before importing new templates
+- Review template items and triggers for your specific needs
+- Keep templates updated with latest Zabbix and RouterOS versions
+
+---
+
+## 💬 Support & Contact
+
+- **Issues**: [GitHub Issues](https://github.com/ranas-mukminov/MikroTik-SNMPv2c-Zabbix-Template-64-bit-Counters-/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/ranas-mukminov/MikroTik-SNMPv2c-Zabbix-Template-64-bit-Counters-/discussions)
+- **Professional Services**: [run-as-daemon.ru](https://run-as-daemon.ru)
+
+For professional consulting on Zabbix deployment, MikroTik network design, or enterprise monitoring solutions, visit [run-as-daemon.ru](https://run-as-daemon.ru).
+
+---
+
+**Made with ❤️ by [Ranas Mukminov](https://github.com/ranas-mukminov)**
