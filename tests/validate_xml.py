@@ -185,7 +185,8 @@ class TemplateValidator:
             if 'bandwidth' in key_text or 'error' in key_text or 'discard' in key_text:
                 preprocessing = item.find('.//preprocessing')
                 if preprocessing is None:
-                    self.warnings.append(f"Item '{name.text}' may need CHANGE_PER_SECOND preprocessing")
+                    item_name = name.text if name is not None and name.text else 'unknown'
+                    self.warnings.append(f"Item '{item_name}' may need CHANGE_PER_SECOND preprocessing")
 
     def _validate_oid(self, oid: str, item_name: str):
         """Validate SNMP OID format"""
@@ -204,7 +205,8 @@ class TemplateValidator:
 
     def _validate_macros(self):
         """Validate macro definitions"""
-        macros = self.root.findall('.//macro')
+        # Only get macros from template/macros section, not from LLD filters
+        macros = self.root.findall('.//template/macros/macro')
 
         if not macros:
             self.warnings.append("No macros found in template")
