@@ -1,0 +1,7 @@
+kubeconfig_path      = "~/.kube/k3s-dev"
+monitoring_namespace = "observability"
+
+git_service = {
+  hostname    = "code.homelab.local"
+  admin_email = "devops@example.com"
+}

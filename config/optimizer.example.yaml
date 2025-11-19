@@ -1,0 +1,9 @@
+collectors:
+  proxmox:
+    url: https://pve.local:8006/api2/json
+    token_id: terraform@pve!collector
+    token_secret: changeme
+power_profiles:
+  pve-1:
+    base_idle_watts: 90
+    watts_per_cpu_core: 8.5

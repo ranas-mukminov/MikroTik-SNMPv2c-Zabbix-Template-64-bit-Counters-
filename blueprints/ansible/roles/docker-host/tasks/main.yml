@@ -1,0 +1,4 @@
+---
+- name: placeholder task for docker-host role
+  ansible.builtin.debug:
+    msg: "docker-host role needs implementation for target environment"

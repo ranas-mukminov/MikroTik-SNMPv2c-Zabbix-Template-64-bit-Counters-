@@ -1,0 +1,12 @@
+---
+- name: Prepare Docker host for micro-SaaS
+  hosts: servers
+  roles:
+    - docker-host
+
+- name: Configure backup routines
+  hosts: servers
+  tasks:
+    - name: Placeholder backup job
+      ansible.builtin.debug:
+        msg: "Schedule restic or rclone backups to S3-compatible bucket"

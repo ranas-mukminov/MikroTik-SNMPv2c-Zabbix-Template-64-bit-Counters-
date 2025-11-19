@@ -1,0 +1,4 @@
+---
+- name: placeholder task for nas role
+  ansible.builtin.debug:
+    msg: "nas role needs implementation for target environment"

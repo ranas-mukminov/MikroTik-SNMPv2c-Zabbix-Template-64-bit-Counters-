@@ -1,0 +1,33 @@
+proxmox_api_url    = "https://pve.local:8006/api2/json"
+proxmox_token_id   = "terraform@pve!homelab"
+proxmox_token_secret = "<insert>"
+
+nodes = [
+  {
+    name         = "pve-mgmt"
+    host         = "10.0.10.11"
+    cpu_cores    = 8
+    memory_gb    = 32
+    management   = true
+    storage_pool = "local-lvm"
+  },
+  {
+    name         = "pve-node1"
+    host         = "10.0.10.12"
+    cpu_cores    = 16
+    memory_gb    = 64
+    management   = false
+    storage_pool = "ceph-hdd"
+  }
+]
+
+vlans = {
+  wan = {
+    id   = 10
+    cidr = "203.0.113.2/30"
+  }
+  lan = {
+    id   = 20
+    cidr = "10.10.0.0/16"
+  }
+}

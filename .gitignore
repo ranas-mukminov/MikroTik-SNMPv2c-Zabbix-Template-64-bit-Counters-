@@ -1,83 +1,20 @@
-# Backup files
-*.bak
-*.backup
-*.old
-*.orig
-*~
-
-# Temporary files
-*.tmp
-*.temp
-*.swp
-*.swo
-.*.swp
-
-# OS-specific files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-Desktop.ini
-
-# Editor-specific files
-.vscode/
-.idea/
-*.sublime-project
-*.sublime-workspace
-*.code-workspace
-
-# Python
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-venv/
-ENV/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
+*.pyc
+*.pyo
 *.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-
-# Testing
+.venv/
+.env
+.envrc
+.cache/
 .pytest_cache/
-.coverage
-.tox/
+coverage.xml
 htmlcov/
+/.idea/
+/.vscode/
+.DS_Store
+*.tfstate*
+.terraform/
+terraform.tfvars
+*.retry
+report*.md
 *.log
-
-# Local configuration (credentials)
-*.local
-*.secret
-secrets/
-private/
-
-# Zabbix exports with sensitive data
-*_export_with_credentials.xml
-*_backup_*.xml
-*_with_credentials.xml
-
-# Documentation builds
-docs/_build/
-site/
-
-# Node modules (if using any JS tools)
-node_modules/
-package-lock.json
-yarn.lock

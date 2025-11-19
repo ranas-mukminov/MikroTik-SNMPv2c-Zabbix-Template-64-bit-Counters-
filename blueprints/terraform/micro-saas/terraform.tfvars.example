@@ -1,0 +1,4 @@
+domain            = "saas.example.com"
+image_tag         = "stable"
+postgres_password = "supersecret"
+backup_bucket     = "s3://micro-saas-backups"
