@@ -19,7 +19,9 @@ def test_blueprint_has_required_files(blueprint: str):
     assert (path / "outputs.tf").exists()
 
 
-@pytest.mark.skipif(not terraform_available(), reason="Terraform binary not available in test environment")
+@pytest.mark.skipif(
+    not terraform_available(), reason="Terraform binary not available in test environment"
+)
 def test_terraform_validate(tmp_path: Path):
     blueprint = BLUEPRINT_ROOT / "proxmox-homelab"
     tmp_dir = tmp_path / "tf"

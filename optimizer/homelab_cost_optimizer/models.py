@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
 
 
 @dataclass
@@ -18,9 +17,9 @@ class Node:
     cpu_cores: int
     memory_gb: int
     power_profile: PowerProfile = field(default_factory=PowerProfile)
-    metadata: Dict[str, str] = field(default_factory=dict)
+    metadata: dict[str, str] = field(default_factory=dict)
 
-    def capacity(self) -> Dict[str, int]:
+    def capacity(self) -> dict[str, int]:
         return {"cpu_cores": self.cpu_cores, "memory_gb": self.memory_gb}
 
 
@@ -32,16 +31,16 @@ class Workload:
     memory_gb: float
     utilization: float
     node_name: str
-    labels: Dict[str, str] = field(default_factory=dict)
+    labels: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass
 class InventorySnapshot:
-    nodes: List[Node]
-    workloads: List[Workload]
-    metadata: Dict[str, str] = field(default_factory=dict)
+    nodes: list[Node]
+    workloads: list[Workload]
+    metadata: dict[str, str] = field(default_factory=dict)
 
-    def node_by_name(self, name: str) -> Optional[Node]:
+    def node_by_name(self, name: str) -> Node | None:
         for node in self.nodes:
             if node.name == name:
                 return node

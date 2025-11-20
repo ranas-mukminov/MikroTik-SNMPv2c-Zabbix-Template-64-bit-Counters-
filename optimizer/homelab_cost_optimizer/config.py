@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 try:
     import yaml
@@ -9,7 +9,7 @@ except ImportError:  # pragma: no cover - fallback when PyYAML is unavailable
     yaml = None  # type: ignore[assignment]
 
 
-def load_yaml(path: str | Path) -> Dict[str, Any]:
+def load_yaml(path: str | Path) -> dict[str, Any]:
     file_path = Path(path)
     if not file_path.exists():
         raise FileNotFoundError(f"Configuration file not found: {file_path}")
@@ -19,10 +19,10 @@ def load_yaml(path: str | Path) -> Dict[str, Any]:
     return _simple_yaml(text)
 
 
-def _simple_yaml(text: str) -> Dict[str, Any]:
+def _simple_yaml(text: str) -> dict[str, Any]:
     """Very small YAML subset parser for key/value pairs."""
 
-    data: Dict[str, Any] = {}
+    data: dict[str, Any] = {}
     for line in text.splitlines():
         line = line.strip()
         if not line or line.startswith("#"):

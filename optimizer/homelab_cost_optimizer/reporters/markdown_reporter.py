@@ -1,10 +1,17 @@
 from __future__ import annotations
 
-from typing import Dict
 
-
-def render_markdown(power: Dict[str, float], cost: Dict[str, Dict[str, float]], plan: Dict[str, str] | None = None) -> str:
-    md = ["# Homelab cost optimizer report", "", "## Power consumption", "", "| Node | Watts |", "| --- | ---: |"]
+def render_markdown(
+    power: dict[str, float], cost: dict[str, dict[str, float]], plan: dict[str, str] | None = None
+) -> str:
+    md = [
+        "# Homelab cost optimizer report",
+        "",
+        "## Power consumption",
+        "",
+        "| Node | Watts |",
+        "| --- | ---: |",
+    ]
     for node, watts in power.items():
         md.append(f"| {node} | {watts} |")
     md.extend(["", "## Monthly cost", "", "| Node | Cost | Currency |", "| --- | ---: | --- |"])

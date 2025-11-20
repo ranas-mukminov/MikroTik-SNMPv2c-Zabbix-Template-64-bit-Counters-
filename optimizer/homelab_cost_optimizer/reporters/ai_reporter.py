@@ -1,17 +1,15 @@
 from __future__ import annotations
 
-from typing import Dict, Optional
-
 from ai_providers.base import AIProvider
 from ai_providers.mock_provider import MockProvider
 
 
 def render_ai_report(
-    power: Dict[str, float],
-    cost: Dict[str, Dict[str, float]],
+    power: dict[str, float],
+    cost: dict[str, dict[str, float]],
     scenario: str,
     savings: float,
-    provider: Optional[AIProvider] = None,
+    provider: AIProvider | None = None,
 ) -> str:
     provider = provider or MockProvider()
     payload = {

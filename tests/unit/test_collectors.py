@@ -1,5 +1,5 @@
-from homelab_cost_optimizer.collectors.proxmox_collector import ProxmoxCollector
 from homelab_cost_optimizer.collectors.docker_collector import DockerCollector
+from homelab_cost_optimizer.collectors.proxmox_collector import ProxmoxCollector
 
 
 def test_proxmox_collector_returns_snapshot():
