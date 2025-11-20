@@ -34,7 +34,10 @@ profile = "black"
 
 [tool.ruff]
 line-length = 100
+
+[tool.ruff.lint]
 select = ["E", "F", "B", "I", "UP"]
+ignore = ["B008"]  # typer.Option in defaults is the standard pattern
 
 [tool.pytest.ini_options]
 minversion = "7.0"

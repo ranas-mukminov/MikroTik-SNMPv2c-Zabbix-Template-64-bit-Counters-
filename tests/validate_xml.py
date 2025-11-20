@@ -15,19 +15,18 @@ Usage:
     python3 validate_xml.py --all  # Validate all XML files in parent directory
 """
 
-import sys
 import os
 import re
+import sys
 import xml.etree.ElementTree as ET
 from collections import defaultdict
-from typing import List, Dict, Tuple
 
 # ANSI color codes
-GREEN = '\033[92m'
-RED = '\033[91m'
-YELLOW = '\033[93m'
-BLUE = '\033[94m'
-RESET = '\033[0m'
+GREEN = "\033[92m"
+RED = "\033[91m"
+YELLOW = "\033[93m"
+BLUE = "\033[94m"
+RESET = "\033[0m"
 
 
 class TemplateValidator:
@@ -35,9 +34,9 @@ class TemplateValidator:
         self.xml_path = xml_path
         self.tree = None
         self.root = None
-        self.errors: List[str] = []
-        self.warnings: List[str] = []
-        self.info: List[str] = []
+        self.errors: list[str] = []
+        self.warnings: list[str] = []
+        self.info: list[str] = []
 
     def validate(self) -> bool:
         """Run all validations and return success status"""
@@ -88,7 +87,7 @@ class TemplateValidator:
 
     def _validate_version(self):
         """Validate Zabbix export version"""
-        version = self.root.get('version')
+        version = self.root.get("version")
         if not version:
             self.errors.append("Missing zabbix_export version attribute")
         elif version != "7.0":
@@ -98,13 +97,13 @@ class TemplateValidator:
 
     def _validate_template_metadata(self):
         """Validate template metadata"""
-        template = self.root.find('.//template')
+        template = self.root.find(".//template")
         if template is None:
             self.errors.append("No template element found")
             return
 
         # Check required fields
-        required_fields = ['uuid', 'template', 'name']
+        required_fields = ["uuid", "template", "name"]
         for field in required_fields:
             elem = template.find(field)
             if elem is None or not elem.text:
@@ -113,20 +112,22 @@ class TemplateValidator:
                 self.info.append(f"✓ Template {field}: {elem.text}")
 
         # Check template group
-        group = template.find('.//group/name')
+        group = template.find(".//group/name")
         if group is not None:
             self.info.append(f"✓ Template group: {group.text}")
             if "Templates/Network" not in group.text:
-                self.warnings.append("Template group should be 'Templates/Network devices' for Zabbix 7.0")
+                self.warnings.append(
+                    "Template group should be 'Templates/Network devices' for Zabbix 7.0"
+                )
 
     def _validate_uuids(self):
         """Validate UUID uniqueness and format"""
         uuids = defaultdict(list)
-        uuid_pattern = re.compile(r'^[a-f0-9]{32}$')
+        uuid_pattern = re.compile(r"^[a-f0-9]{32}$")
 
         # Collect all UUIDs
         for elem in self.root.iter():
-            if elem.tag == 'uuid' and elem.text:
+            if elem.tag == "uuid" and elem.text:
                 uuid = elem.text.strip()
 
                 # Check format
@@ -147,7 +148,7 @@ class TemplateValidator:
 
     def _validate_items(self):
         """Validate item definitions"""
-        items = self.root.findall('.//item') + self.root.findall('.//item_prototype')
+        items = self.root.findall(".//item") + self.root.findall(".//item_prototype")
 
         if not items:
             self.warnings.append("No items found in template")
@@ -156,22 +157,24 @@ class TemplateValidator:
         self.info.append(f"✓ Found {len(items)} items/item prototypes")
 
         for item in items:
-            name = item.find('name')
-            key = item.find('key')
-            item_type = item.find('type')
+            name = item.find("name")
+            key = item.find("key")
+            item_type = item.find("type")
 
             # Validate item has name and key
             if name is None or not name.text:
                 self.errors.append("Item missing name")
             if key is None or not key.text:
-                self.errors.append(f"Item '{name.text if name is not None else 'unknown'}' missing key")
+                self.errors.append(
+                    f"Item '{name.text if name is not None else 'unknown'}' missing key"
+                )
                 continue
 
             key_text = key.text
 
             # Validate SNMP items have OID
-            if item_type is not None and item_type.text == 'SNMP_AGENT':
-                oid = item.find('snmp_oid')
+            if item_type is not None and item_type.text == "SNMP_AGENT":
+                oid = item.find("snmp_oid")
                 if oid is None or not oid.text:
                     self.errors.append(f"SNMP item '{name.text}' missing snmp_oid")
                 else:
@@ -182,31 +185,33 @@ class TemplateValidator:
                 self.errors.append(f"Invalid item key syntax: {key_text}")
 
             # Check for preprocessing on CHANGE_PER_SECOND items
-            if 'bandwidth' in key_text or 'error' in key_text or 'discard' in key_text:
-                preprocessing = item.find('.//preprocessing')
+            if "bandwidth" in key_text or "error" in key_text or "discard" in key_text:
+                preprocessing = item.find(".//preprocessing")
                 if preprocessing is None:
-                    item_name = name.text if name is not None and name.text else 'unknown'
-                    self.warnings.append(f"Item '{item_name}' may need CHANGE_PER_SECOND preprocessing")
+                    item_name = name.text if name is not None and name.text else "unknown"
+                    self.warnings.append(
+                        f"Item '{item_name}' may need CHANGE_PER_SECOND preprocessing"
+                    )
 
     def _validate_oid(self, oid: str, item_name: str):
         """Validate SNMP OID format"""
         # OID can be numeric (1.3.6.1...) or MIB name (IF-MIB::ifIndex)
-        numeric_oid_pattern = re.compile(r'^\.?\d+(\.\d+)*$')
-        mib_oid_pattern = re.compile(r'^[A-Z][A-Z0-9-]*::[a-zA-Z][a-zA-Z0-9]*')
+        numeric_oid_pattern = re.compile(r"^\.?\d+(\.\d+)*$")
+        mib_oid_pattern = re.compile(r"^[A-Z][A-Z0-9-]*::[a-zA-Z][a-zA-Z0-9]*")
 
-        if not (numeric_oid_pattern.match(oid) or mib_oid_pattern.match(oid) or 'discovery' in oid):
+        if not (numeric_oid_pattern.match(oid) or mib_oid_pattern.match(oid) or "discovery" in oid):
             self.warnings.append(f"Unusual OID format in '{item_name}': {oid}")
 
     def _validate_item_key(self, key: str) -> bool:
         """Validate item key syntax"""
         # Basic validation: key[params]
-        key_pattern = re.compile(r'^[a-zA-Z0-9._-]+(\[.*\])?$')
+        key_pattern = re.compile(r"^[a-zA-Z0-9._-]+(\[.*\])?$")
         return bool(key_pattern.match(key))
 
     def _validate_macros(self):
         """Validate macro definitions"""
         # Only get macros from template/macros section, not from LLD filters
-        macros = self.root.findall('.//template/macros/macro')
+        macros = self.root.findall(".//template/macros/macro")
 
         if not macros:
             self.warnings.append("No macros found in template")
@@ -215,14 +220,14 @@ class TemplateValidator:
         self.info.append(f"✓ Found {len(macros)} macros")
 
         required_macros = {
-            'SNMPv2c': ['{$SNMP_COMMUNITY}'],
-            'SNMPv3': ['{$SNMPV3_USER}', '{$SNMPV3_AUTH_PASSPHRASE}', '{$SNMPV3_PRIV_PASSPHRASE}']
+            "SNMPv2c": ["{$SNMP_COMMUNITY}"],
+            "SNMPv3": ["{$SNMPV3_USER}", "{$SNMPV3_AUTH_PASSPHRASE}", "{$SNMPV3_PRIV_PASSPHRASE}"],
         }
 
         macro_names = []
         for macro in macros:
-            name = macro.find('macro')
-            value = macro.find('value')
+            name = macro.find("macro")
+            value = macro.find("value")
 
             if name is None or not name.text:
                 self.errors.append("Macro missing name")
@@ -231,24 +236,26 @@ class TemplateValidator:
             macro_names.append(name.text)
 
             # Check macro syntax
-            if not (name.text.startswith('{$') and name.text.endswith('}')):
+            if not (name.text.startswith("{$") and name.text.endswith("}")):
                 self.errors.append(f"Invalid macro syntax: {name.text}")
 
             # Check for security issues
             if value is not None and value.text:
-                if 'public' in value.text.lower() and 'COMMUNITY' in name.text:
-                    self.errors.append(f"Security risk: Macro {name.text} uses default 'public' value")
+                if "public" in value.text.lower() and "COMMUNITY" in name.text:
+                    self.errors.append(
+                        f"Security risk: Macro {name.text} uses default 'public' value"
+                    )
 
         # Check for required macros (either SNMPv2c or SNMPv3)
-        has_v2_macros = all(m in macro_names for m in required_macros['SNMPv2c'])
-        has_v3_macros = all(m in macro_names for m in required_macros['SNMPv3'])
+        has_v2_macros = all(m in macro_names for m in required_macros["SNMPv2c"])
+        has_v3_macros = all(m in macro_names for m in required_macros["SNMPv3"])
 
         if not (has_v2_macros or has_v3_macros):
             self.warnings.append("Template missing expected SNMP authentication macros")
 
     def _validate_triggers(self):
         """Validate trigger definitions"""
-        triggers = self.root.findall('.//trigger') + self.root.findall('.//trigger_prototype')
+        triggers = self.root.findall(".//trigger") + self.root.findall(".//trigger_prototype")
 
         if not triggers:
             self.warnings.append("No triggers found in template")
@@ -257,29 +264,33 @@ class TemplateValidator:
         self.info.append(f"✓ Found {len(triggers)} triggers/trigger prototypes")
 
         for trigger in triggers:
-            name = trigger.find('name')
-            expression = trigger.find('expression')
-            priority = trigger.find('priority')
+            name = trigger.find("name")
+            expression = trigger.find("expression")
+            priority = trigger.find("priority")
 
             if name is None or not name.text:
                 self.errors.append("Trigger missing name")
 
             if expression is None or not expression.text:
-                self.errors.append(f"Trigger '{name.text if name else 'unknown'}' missing expression")
+                self.errors.append(
+                    f"Trigger '{name.text if name else 'unknown'}' missing expression"
+                )
 
             if priority is None or not priority.text:
-                self.warnings.append(f"Trigger '{name.text if name else 'unknown'}' missing priority")
+                self.warnings.append(
+                    f"Trigger '{name.text if name else 'unknown'}' missing priority"
+                )
 
     def _validate_value_maps(self):
         """Validate value map definitions"""
-        value_maps = self.root.findall('.//value_map')
+        value_maps = self.root.findall(".//value_map")
 
         if value_maps:
             self.info.append(f"✓ Found {len(value_maps)} value maps")
 
             for vm in value_maps:
-                name = vm.find('name')
-                mappings = vm.findall('.//mapping')
+                name = vm.find("name")
+                mappings = vm.findall(".//mapping")
 
                 if name is None or not name.text:
                     self.errors.append("Value map missing name")
@@ -288,9 +299,9 @@ class TemplateValidator:
 
     def _get_element_path(self, elem) -> str:
         """Get descriptive path for an element"""
-        parent = elem.getparent() if hasattr(elem, 'getparent') else None
+        parent = elem.getparent() if hasattr(elem, "getparent") else None
         if parent is not None:
-            name_elem = parent.find('name')
+            name_elem = parent.find("name")
             if name_elem is not None and name_elem.text:
                 return name_elem.text
         return elem.tag
@@ -340,11 +351,11 @@ def main():
 
     files_to_validate = []
 
-    if sys.argv[1] == '--all':
+    if sys.argv[1] == "--all":
         # Find all XML files in parent directory
         parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         for file in os.listdir(parent_dir):
-            if file.endswith('.xml'):
+            if file.endswith(".xml"):
                 files_to_validate.append(os.path.join(parent_dir, file))
     else:
         files_to_validate = sys.argv[1:]
@@ -384,5 +395,5 @@ def main():
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

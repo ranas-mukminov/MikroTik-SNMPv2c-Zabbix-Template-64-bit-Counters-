@@ -1,14 +1,11 @@
 from __future__ import annotations
 
-from collections import defaultdict
-from typing import Dict
-
 from ..models import InventorySnapshot, Node, Workload
 
 
 class PowerEstimator:
-    def estimate(self, snapshot: InventorySnapshot) -> Dict[str, float]:
-        per_node: Dict[str, float] = {}
+    def estimate(self, snapshot: InventorySnapshot) -> dict[str, float]:
+        per_node: dict[str, float] = {}
         for node in snapshot.nodes:
             workloads = [w for w in snapshot.workloads if w.node_name == node.name]
             per_node[node.name] = self._estimate_node(node, workloads)

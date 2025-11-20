@@ -3,15 +3,15 @@ from __future__ import annotations
 import json
 from dataclasses import asdict
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import typer
 
+from .collectors.base import build_snapshot
 from .collectors.docker_collector import DockerCollector
 from .collectors.k8s_collector import KubernetesCollector
 from .collectors.libvirt_collector import LibvirtCollector
 from .collectors.proxmox_collector import ProxmoxCollector
-from .collectors.base import build_snapshot
 from .config import load_yaml
 from .consolidators.heuristic_consolidator import HeuristicConsolidator
 from .estimators.cost_estimator import CostEstimator
@@ -45,7 +45,9 @@ def analyze(
     snapshot = _load_snapshot(inventory)
     power = PowerEstimator().estimate(snapshot)
     cfg = load_yaml(electricity)
-    cost = CostEstimator(price_per_kwh=cfg.get("price_per_kwh", 0.2), currency=cfg.get("currency", "USD")).estimate(power)
+    cost = CostEstimator(
+        price_per_kwh=cfg.get("price_per_kwh", 0.2), currency=cfg.get("currency", "USD")
+    ).estimate(power)
     report = markdown_reporter.render_markdown(power, cost)
     out.write_text(report, encoding="utf-8")
     typer.echo(f"Report saved to {out}")
@@ -65,16 +67,20 @@ def suggest(
     plan = consolidator.consolidate(snapshot)
     power = PowerEstimator().estimate(snapshot)
     cfg = load_yaml(electricity)
-    cost = CostEstimator(price_per_kwh=cfg.get("price_per_kwh", 0.2), currency=cfg.get("currency", "USD")).estimate(power)
+    cost = CostEstimator(
+        price_per_kwh=cfg.get("price_per_kwh", 0.2), currency=cfg.get("currency", "USD")
+    ).estimate(power)
     report = markdown_reporter.render_markdown(power, cost, plan.assignments)
     if ai_report:
-        ai_summary = ai_reporter.render_ai_report(power, cost, scenario, plan.estimated_idle_watt_reduction)
+        ai_summary = ai_reporter.render_ai_report(
+            power, cost, scenario, plan.estimated_idle_watt_reduction
+        )
         report = f"{report}\n\n---\n\n### AI summary\n\n{ai_summary}\n"
     out.write_text(report, encoding="utf-8")
     typer.echo(f"Suggestion report saved to {out}")
 
 
-def _collector_factory(source: str, dataset: Dict[str, Any] | None):
+def _collector_factory(source: str, dataset: dict[str, Any] | None):
     if source == "proxmox":
         return ProxmoxCollector(dataset)
     if source == "libvirt":
@@ -86,7 +92,7 @@ def _collector_factory(source: str, dataset: Dict[str, Any] | None):
     raise typer.BadParameter(f"Unknown source: {source}")
 
 
-def _load_mock(path: Path | str) -> Dict[str, Any]:
+def _load_mock(path: Path | str) -> dict[str, Any]:
     file_path = Path(path)
     return json.loads(file_path.read_text(encoding="utf-8"))
 

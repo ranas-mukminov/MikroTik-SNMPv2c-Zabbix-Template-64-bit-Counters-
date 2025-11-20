@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-from typing import Dict
 
-
-def render_text(power: Dict[str, float], cost: Dict[str, Dict[str, float]]) -> str:
+def render_text(power: dict[str, float], cost: dict[str, dict[str, float]]) -> str:
     lines = ["Homelab cost optimizer report", "==============================", ""]
     lines.append("Power consumption (watts):")
     for node, watts in power.items():

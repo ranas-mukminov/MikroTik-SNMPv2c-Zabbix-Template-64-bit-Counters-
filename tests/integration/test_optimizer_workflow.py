@@ -2,8 +2,8 @@ import json
 from pathlib import Path
 
 from homelab_cost_optimizer.cli import app
-from typer.testing import CliRunner
 
+from typer.testing import CliRunner
 
 runner = CliRunner()
 
