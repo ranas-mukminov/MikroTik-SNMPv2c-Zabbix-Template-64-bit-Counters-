@@ -14,9 +14,9 @@ except ImportError:  # pragma: no cover - optional dependency
 class OpenAIProvider(AIProvider):
     """Example provider using OpenAI's Chat Completions API."""
 
-    def __init__(self, model: str = "gpt-4o-mini") -> None:
+    def __init__(self, model: str = "gpt-4o-mini", api_key: str | None = None) -> None:
         self.model = model
-        self.api_key = os.getenv("OPENAI_API_KEY")
+        self.api_key = api_key or os.getenv("OPENAI_API_KEY")
 
     def _ensure_client(self) -> None:
         if openai is None:
